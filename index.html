@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="preload" as="image" href="portrait-cut.png" fetchpriority="high" />
 <style>
   :root{
     --bg:#0b0c0e;
@@ -171,7 +172,7 @@
   /* ---------------------------------------------------------------------
      SHOWCASE — entropic overlapping panels, each an ASCII drawing of the
      system it names. Different size, aspect, and rotation per card. */
-  .showcase{padding:clamp(90px,10vw,140px) 0;border-bottom:1px solid var(--border)}
+   .showcase{padding:clamp(90px,10vw,140px) 0;border-bottom:1px solid var(--border);content-visibility:auto;contain-intrinsic-size:auto 640px}
   .showcase__head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:clamp(58px,8vw,104px)}
   .showcase__head h2{font-size:clamp(30px,4.4vw,62px);font-weight:700;letter-spacing:-.04em;line-height:.92;max-width:13ch}
   .showcase__head p{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);max-width:30ch;line-height:1.7}
@@ -203,7 +204,7 @@
 
   /* ---------------------------------------------------------------------
      WORK — typographic system list. */
-  .systems{padding:clamp(82px,9vw,124px) 0 96px}
+   .systems{padding:clamp(82px,9vw,124px) 0 96px;content-visibility:auto;contain-intrinsic-size:auto 400px}
   .systems__head{margin-bottom:46px;max-width:62ch}
   .systems__head h2{margin-top:20px;font-size:clamp(30px,4.4vw,62px);font-weight:700;line-height:.92;letter-spacing:-.04em;max-width:15ch}
   .system-list{border-top:1px solid var(--line)}
@@ -220,7 +221,7 @@
     font-size:14px;line-height:1.55;transition:max-height .32s cubic-bezier(.2,.7,.2,1),opacity .22s,margin-top .22s}
   .system-row.is-open .system-row__detail{max-height:64px;opacity:1;margin-top:-8px}
 
-  .contact{padding:clamp(96px,10vw,128px) 0 58px;text-align:center;border-top:1px solid var(--border)}
+   .contact{padding:clamp(96px,10vw,128px) 0 58px;text-align:center;border-top:1px solid var(--border);content-visibility:auto;contain-intrinsic-size:auto 500px}
   .contact .eyebrow{justify-content:center}
   .contact h2{font-size:clamp(46px,9vw,124px);font-weight:700;letter-spacing:-.05em;line-height:.9;margin:24px 0 10px}
   .contact p{max-width:46ch;margin:18px auto 0;color:var(--text);font-size:17px;line-height:1.55}
@@ -284,7 +285,7 @@
     <section class="hero" id="top" aria-label="Ryan portfolio hero">
          <div class="hero__portrait">
          <div class="portrait-frame" id="portrait-frame">
-           <img class="portrait-img" src="portrait-cut.png" alt="Portrait of Ryan" decoding="async" />
+           <img class="portrait-img" src="portrait-cut.png" alt="Portrait of Ryan" decoding="async" fetchpriority="high" />
           <div class="portrait-pixel-gate" id="portrait-pixel-gate" aria-hidden="true"></div>
 <pre class="face-ascii" id="face-ascii" aria-hidden="true">
                                             @@   @         @@@@@@@@@
