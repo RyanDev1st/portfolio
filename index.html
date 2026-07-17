@@ -34,6 +34,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#0b0c0e" />
+<!-- Hero-critical preloads: the portrait is THE reveal asset, so load it FIRST at high
+     priority (on the live site it was being throttled by the 2.8MB intro video fetching in
+     parallel, starving the reveal and stuttering it). GSAP drives the reveal, so warm it too. -->
+<link rel="preload" as="image" href="portrait-cut.png" fetchpriority="high" />
+<link rel="preload" as="script" href="assets/vendor/gsap.min.js" />
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png" />
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png" />
 <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/favicon-48.png" />
@@ -1026,7 +1031,7 @@
      localStorage is the faithful client-side stand-in. Reduced-motion skips it, and a
      load stall / error can never trap the visitor (backstop + Skip). -->
 <div class="introv" id="introVid" hidden>
-  <video class="introv__vid" id="introVideo" playsinline muted preload="auto" poster="assets/intro-poster.jpg">
+  <video class="introv__vid" id="introVideo" playsinline muted preload="metadata" poster="assets/intro-poster.jpg">
     <source src="assets/intro.mp4" type="video/mp4">
   </video>
   <button type="button" class="introv__btn introv__sound" id="introSound" aria-label="Toggle sound"><span class="ii-muted">Sound on</span><span class="ii-on">Sound off</span></button>
@@ -1116,7 +1121,7 @@
     <section class="hero" id="top" aria-label="Ryan portfolio hero">
       <div class="hero__portrait">
         <div class="portrait-frame" id="portrait-frame">
-          <img class="portrait-img" src="portrait-cut.png" alt="Portrait of Ryan" decoding="async" />
+          <img class="portrait-img" src="portrait-cut.png" alt="Portrait of Ryan" decoding="async" fetchpriority="high" />
           <div class="portrait-pixel-gate" id="portrait-pixel-gate" aria-hidden="true"></div>
 <pre class="face-ascii" id="face-ascii" aria-hidden="true">
                          <b style="background:#b9ada7;color:#e9dad3">O</b><b style="background:#c7bdb8;color:#f9ede7">M</b><b style="background:#e5ddd9;color:#ffffff">8</b><b style="background:#dad0ca;color:#fffffd">0</b><b style="background:#ded3cd;color:#ffffff">0</b>    <b style="background:#8b786e;color:#b39c90">5</b><b style="background:#635046;color:#826c61">+</b><b style="background:#968378;color:#bfa99c">7</b><b style="background:#9e8b80;color:#c8b2a5">7</b><b style="background:#836d63;color:#a88f83">3</b><b style="background:#7c665a;color:#a18778">I</b>                                
