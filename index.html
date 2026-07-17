@@ -1063,6 +1063,10 @@
   function unmute(){
     if(!vid.muted) return;
     vid.muted=false; ov.classList.remove('need-sound','need-tap'); ov.classList.add('is-sound');
+    // Heard nothing yet (blocked unmuted autoplay -> muted fallback)? Restart from the top so
+    // the audio plays from the BEGINNING on the tap, instead of jumping in mid-clip. A late
+    // tap (already watched most of it) just unmutes in place.
+    try{ if(vid.currentTime < 2.6) vid.currentTime = 0; }catch(_){}
     var q=vid.play(); if(q&&q.catch) q.catch(function(){});
   }
   ['pointerdown','keydown','touchstart'].forEach(function(t){ addEventListener(t, unmute, { once:true, capture:true, passive:true }); });
@@ -2877,11 +2881,17 @@
   // The `.ptag` "Ryan" label toggles the portrait between photo and ascii by playing the
   // reveal FORWARD or in full REVERSE. portraitMode = the settled state; portraitBusy gates
   // re-entry while ANY flip (the initial reveal OR a toggle) is mid-flight.
-  var portraitMode='photo', portraitBusy=false;
+  var portraitMode='photo', portraitBusy=false, revealTL=null, revealWatch=0;
 
   function gsapReveal(done){
     var g=window.gsap; buildFx(); drawRest();
-    var a={p:0}, b={p:0}, tl=g.timeline();
+    // Disable lag-smoothing for the reveal. Default GSAP caps a >500ms frame's delta to
+    // ~33ms, so on a networked LIVE load a burst of long frames (the 2.2MB portrait decode
+    // that lands right at is-photo-live, fonts/assets finishing) makes the EXPLODE tween
+    // crawl and look FROZEN - exactly the "second layer only, live only" bug. With it off,
+    // a lagged frame advances the tween by REAL elapsed time, so it always completes.
+    try{ g.ticker.lagSmoothing(0); }catch(_){}
+    var a={p:0}, b={p:0}, tl=g.timeline(); revealTL=tl;
     // LEAD_HOLD — the B&W ascii portrait (drawRest) stands still this long BEFORE the
     // dissolve, so the visitor reads it (Ryan). The canvas already shows it; the
     // timeline just starts the flip at LEAD_HOLD. Sound cues the dissolve, not the hold.
@@ -2903,14 +2913,28 @@
     if(!faceFrame){ if(done) done(); return; }
     portraitBusy=true;
     disableSpot();                                 // the reveal owns the canvas; no stray spotlight frames
+    // DECODE the photo up-front so the is-photo-live pivot doesn't trigger the big first
+    // decode of the 2.2MB portrait DURING the explode (local = cached/instant, live = the
+    // decode stalls the second layer). Non-blocking; the lead hold covers the latency.
+    try{ if(facePhoto && facePhoto.decode) facePhoto.decode().catch(function(){}); }catch(_){}
+    // one-shot completion guard: whichever fires first (natural end OR watchdog) wins.
+    var finished=false;
+    function fin(){ if(finished) return; finished=true; if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; } if(done) done(); }
     if(reduce || !fxCtx || !MOSA || !HIFI){       // reduced motion / no canvas: straight to the photo
-      faceFrame.classList.add('is-photo-live'); faceFrame.classList.remove('is-ascii'); hideFx(); portraitMode='photo'; portraitBusy=false; if(done) done(); return;
+      faceFrame.classList.add('is-photo-live'); faceFrame.classList.remove('is-ascii'); hideFx(); portraitMode='photo'; portraitBusy=false; fin(); return;
     }
-    if(window.gsap){ gsapReveal(done); return; }
+    // WATCHDOG: force the end state if the timeline ever stalls, so the portrait can NEVER
+    // freeze mid-flip (the live-site bug). Cleared by fin() on natural completion.
+    if(revealWatch){ clearTimeout(revealWatch); }
+    revealWatch=setTimeout(function(){ revealWatch=0; if(finished) return;
+      if(window.gsap && revealTL){ try{ revealTL.kill(); }catch(_){} }
+      faceFrame.classList.add('is-photo-live'); finishFx(); fin();
+    }, (LEAD_HOLD+D_IMPLODE+PIVOT_HOLD+D_EXPLODE)*1000 + 1500);
+    if(window.gsap){ gsapReveal(fin); return; }
     // no-GSAP fallback: rAF-drive the same LEAD_HOLD -> two flip phases.
     buildFx(); drawRest();
     var LH=LEAD_HOLD*1000, D1=D_IMPLODE*1000, DH=PIVOT_HOLD*1000, D2=D_EXPLODE*1000, t0=performance.now(), lit=false, cued=false, cued2=false;
-    (function tick(now){ var e=now-t0;
+    (function tick(now){ var e=now-t0; if(finished) return;             // watchdog already finished it
       if(e<=LH){ requestAnimationFrame(tick); }                       // hold: B&W ascii stands (drawRest already up)
       else if(e<=LH+D1){ if(!cued){ try{ playSound('dissolve'); }catch(_){} cued=true; } drawFx('implode', easeMaster((e-LH)/D1)); requestAnimationFrame(tick); }
       else if(e<=LH+D1+DH){                                           // pivot hold: full mosaic stands alone
@@ -2920,7 +2944,7 @@
       else if(e<=LH+D1+DH+D2){ if(!lit){ faceFrame.classList.add('is-photo-live'); lit=true; }
         if(!cued2){ try{ playSound('reform'); }catch(_){} cued2=true; }
         drawFx('explode', easeMaster((e-LH-D1-DH)/D2)); requestAnimationFrame(tick); }
-      else { if(!lit) faceFrame.classList.add('is-photo-live'); finishFx(); if(done) done(); }
+      else { if(!lit) faceFrame.classList.add('is-photo-live'); finishFx(); fin(); }
     })(t0);
   }
   // REVERSE of the reveal: photo -> colour mosaic -> B&W ascii, landing on drawRest.
