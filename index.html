@@ -647,9 +647,9 @@
      name and the role line; the reload gate stays terse. */
   .introv__start{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:radial-gradient(120% 90% at 50% 42%, rgba(16,17,21,.92), rgba(7,8,10,.97) 68%, rgba(5,6,7,.99));
-    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
-    opacity:1;transition:opacity .55s ease}
-  .introv.is-started .introv__start{opacity:0;pointer-events:none}
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  /* No CSS transition here on purpose: GSAP owns this overlay's entrance and exit, and two
+     systems animating the same opacity is how you get stutter. */
   /* macOS-style IDE window. Reuses the site's existing traffic-light chrome (carousel cards +
      project modal) so this reads as the SAME product, not a new motif. The code block says who
      Ryan is and what the click does, in the medium he actually works in. */
@@ -670,33 +670,26 @@
   .ide__file{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:rgba(236,231,219,.45)}
   .ide__code{padding:18px 18px 6px;font-family:var(--mono);font-size:12.5px;line-height:1.85;
     color:rgba(236,231,219,.9);overflow-x:auto}
-  .ide__ln{margin:0;white-space:pre;opacity:0;transform:translateY(4px);
-    animation:ideLine .34s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i) * .14s + .18s)}
-  @keyframes ideLine{to{opacity:1;transform:none}}
+  /* GSAP owns every entrance/exit here (Ryan: always GSAP for transitions). No CSS keyframe
+     cascade, so the two systems can never fight over the same properties. */
+  .ide__ln{margin:0;white-space:pre}
   .ide__ln .k{color:rgba(236,231,219,.45)}                 /* keyword, muted (one accent rule) */
   .ide__ln .s{color:rgba(236,231,219,.62)}                 /* strings, muted */
   .ide__ln .f{color:var(--signal)}                         /* the call = the only accent */
   .ide__ln--run{margin-top:10px}
-  .ide__cur{display:inline-block;width:7px;height:13px;margin-left:3px;vertical-align:-2px;background:var(--fg);
-    animation:bootblink 1.1s steps(1) infinite;animation-delay:.9s}
+  .ide__cur{display:inline-block;width:7px;height:13px;margin-left:3px;vertical-align:-2px;background:var(--fg)}
   .ide__foot{display:flex;align-items:center;gap:12px;padding:14px 18px 16px}
   .ide__run{flex:1;padding:12px;border-radius:9px;border:1px solid rgba(255,42,18,.5);
     background:linear-gradient(180deg, rgba(255,42,18,.16), rgba(255,42,18,.09));color:var(--fg);
     font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;
-    opacity:0;animation:ideLine .4s ease forwards .92s;
-    transition:background .2s ease,transform .12s ease,box-shadow .2s ease}
+    transition:background .2s ease,box-shadow .2s ease}
   .ide__run:hover{background:linear-gradient(180deg, rgba(255,42,18,.28), rgba(255,42,18,.16));
     box-shadow:0 0 24px rgba(255,42,18,.3)}
-  .ide__run:active{transform:translateY(1px)}
-  .ide__meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:rgba(236,231,219,.38);white-space:nowrap;
-    opacity:0;animation:ideLine .4s ease forwards 1.05s}
+  .ide__run:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+  .ide__run[disabled]{cursor:progress}
+  .ide__meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:rgba(236,231,219,.38);white-space:nowrap}
   @media (max-width:520px){ .ide__code{font-size:11px} .ide__foot{flex-direction:column;align-items:stretch;gap:8px}
     .ide__meta{text-align:center} }
-  /* Reduced motion: no cascade, no blink. Everything is simply present. */
-  @media (prefers-reduced-motion:reduce){
-    .ide__ln,.ide__run,.ide__meta{animation:none;opacity:1;transform:none}
-    .ide__cur{animation:none}
-  }
   .introv__pass{display:block;margin:16px auto 0;padding:4px;border:0;background:none;cursor:pointer;
     font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
     color:rgba(236,231,219,.4);transition:color .2s ease}
@@ -1059,55 +1052,23 @@
   @media (prefers-reduced-motion:reduce){ .sndhint{transition:none} .sndhint__dot{animation:none} }
 
   /* ---- BOOT GATE (reload audio-consent, terminal boot) ---- */
-  .boot{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;
+  .boot{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:radial-gradient(120% 90% at 50% 40%, rgba(16,17,21,.94), rgba(7,8,10,.97) 70%, rgba(5,6,7,.99));
     -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
-    opacity:0;transition:opacity .5s ease;cursor:pointer;pointer-events:none}
-  .boot.is-show{opacity:1;pointer-events:auto}
-  .boot.is-out{opacity:0;pointer-events:none}
+    opacity:0;cursor:pointer;pointer-events:none}   /* GSAP owns opacity; no CSS transition to fight it */
+  .boot.is-show{pointer-events:auto}
   /* [hidden] must win over the display:flex above (equal specificity -> place last), else the
      invisible overlay stays in the layout and blocks clicks on the whole site after dismissal. */
   .boot[hidden]{display:none}
   .boot__scan{position:absolute;inset:0;pointer-events:none;opacity:.5;
     background:repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px)}
-  .boot__card{position:relative;width:min(92vw,440px);padding:26px 26px 20px;border-radius:14px;
-    border:1px solid rgba(255,255,255,.09);
-    background:linear-gradient(180deg, rgba(20,21,26,.9), rgba(12,13,16,.92));
-    box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
-    text-align:left;outline:none;transform:translateY(10px) scale(.985);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
-  .boot.is-show .boot__card{transform:none}
-  .boot__head{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
-    text-transform:uppercase;color:rgba(236,231,219,.55);margin-bottom:16px}
-  .boot__mark{color:var(--fg);font-weight:700;letter-spacing:0}
-  .boot__mark::after{content:"";display:inline-block;width:6px;height:12px;margin-left:2px;vertical-align:-1px;
-    background:var(--signal);box-shadow:0 0 8px rgba(255,42,18,.7);animation:bootblink 1.1s steps(1) infinite}
+  /* The boot gate reuses the .ide window wholesale (see the IDE block below) so the reload
+     prompt and the first-visit intro are visibly the same object. Only the width differs:
+     this one is a single line, so a narrower window reads as "quick", not as a wall. */
+  .ide--boot{width:min(92vw,380px)}
+  .ide--boot .ide__code{padding-bottom:2px}
+  .ide--boot:focus{outline:none}
   @keyframes bootblink{0%,55%{opacity:1}56%,100%{opacity:0}}
-  .boot__sys{flex:1}
-  .boot__badge{font-size:9.5px;padding:3px 7px;border-radius:5px;color:var(--signal);
-    border:1px solid rgba(255,42,18,.4);background:rgba(255,42,18,.08);letter-spacing:.12em}
-  .boot__body{font-family:var(--mono);font-size:13px;line-height:1.6;color:rgba(236,231,219,.9)}
-  .boot__line{margin:0 0 2px}
-  .boot__line--dim{color:rgba(236,231,219,.5);margin-bottom:16px;font-size:12px}
-  .boot__dots i{opacity:0;animation:bootdots 1.4s steps(1) infinite}
-  .boot__dots i:nth-child(2){animation-delay:.2s}.boot__dots i:nth-child(3){animation-delay:.4s}
-  @keyframes bootdots{0%,80%{opacity:0}20%,60%{opacity:1}}
-  .boot__prompt{margin:0;font-size:14px;color:var(--fg)}
-  .boot__prompt b{color:var(--signal);font-weight:700}
-  .boot__cur{display:inline-block;width:8px;height:15px;margin-left:1px;vertical-align:-2px;background:var(--fg);
-    animation:bootblink 1.1s steps(1) infinite}
-  .boot__or{color:rgba(236,231,219,.4);font-size:12px;margin-left:6px}
-  .boot__go{margin-top:20px;width:100%;padding:13px;border-radius:9px;border:1px solid rgba(255,42,18,.5);
-    background:linear-gradient(180deg, rgba(255,42,18,.16), rgba(255,42,18,.09));color:var(--fg);
-    font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;
-    transition:background .2s ease,transform .12s ease,box-shadow .2s ease}
-  .boot__go:hover{background:linear-gradient(180deg, rgba(255,42,18,.28), rgba(255,42,18,.16));
-    box-shadow:0 0 24px rgba(255,42,18,.3)}
-  .boot__go:active{transform:translateY(1px)}
-  .boot__mute{display:block;margin:11px auto 0;padding:4px;border:0;background:none;cursor:pointer;
-    font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
-    color:rgba(236,231,219,.4);transition:color .2s ease}
-  .boot__mute:hover{color:rgba(236,231,219,.75)}
-  @media (prefers-reduced-motion:reduce){ .boot,.boot__card{transition:none} .boot__mark::after,.boot__cur,.boot__dots i{animation:none} .boot__cur{opacity:1} }
 
   /* ---- EXIT REACTION ---- */
   .react{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:1500;
@@ -1183,6 +1144,12 @@
      repeats. A static file:// page has no server, so true per-IP gating is impossible;
      localStorage is the faithful client-side stand-in. Reduced-motion skips it, and a
      load stall / error can never trap the visitor (backstop + Skip). -->
+<!-- GSAP loads HERE (not at the end of body) because the intro gate, the boot gate and the
+     hero reveal all animate with it and all run above this point. Both files are already
+     <link rel=preload>ed in <head>, so executing them earlier costs no extra fetch. -->
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/ScrollTrigger.min.js"></script>
+
 <div class="introv" id="introVid" hidden>
   <video class="introv__vid" id="introVideo" playsinline muted preload="metadata" poster="assets/intro-poster.jpg">
     <source src="assets/intro.mp4" type="video/mp4">
@@ -1241,30 +1208,64 @@
   // that was made to be heard. One deliberate click makes the opening a chosen moment AND
   // counts as the activation gesture, so the intro plays unmuted, from the top, first time.
   var startCard=document.getElementById('introStart'),
+      ide=startCard&&startCard.querySelector('.ide'),
+      lines=startCard?startCard.querySelectorAll('.ide__ln'):[],
+      cur=startCard&&startCard.querySelector('.ide__cur'),
       go=document.getElementById('introGo'),
+      meta=startCard&&startCard.querySelector('.ide__meta'),
       pass=document.getElementById('introPass');
+  var G=window.gsap, starting=false;
   vid.volume=1; vid.muted=false; ov.classList.add('is-sound');
   function goMuted(){ vid.muted=true; ov.classList.remove('is-sound'); ov.classList.add('need-sound');
     var q=vid.play(); if(q&&q.catch) q.catch(function(){ ov.classList.add('need-tap'); }); }
+
+  // ---- ENTRANCE (GSAP) --------------------------------------------------------
+  // The window arrives, the file writes itself line by line, then the action appears.
+  // Sequenced so the eye lands on the code first and the button last: by the time you
+  // can act, you already know what you are acting on.
+  if(G && ide && !reduce){
+    G.set(startCard,{autoAlpha:1});
+    var tin=G.timeline({defaults:{ease:'power3.out'}});
+    tin.from(ide,{y:20,scale:.965,autoAlpha:0,duration:.55})
+       .from(lines,{y:7,autoAlpha:0,duration:.32,stagger:.075},'-=.24')
+       .from([go,meta],{y:6,autoAlpha:0,duration:.34,stagger:.05},'-=.10')
+       .from(pass,{autoAlpha:0,duration:.3},'-=.20');
+    if(cur) G.to(cur,{autoAlpha:0,duration:.5,ease:'steps(1)',repeat:-1,yoyo:true,delay:.9});
+  }
+
+  // ---- START (GSAP) -----------------------------------------------------------
+  // Click feedback is immediate, the video is told to play at once, and the window
+  // clears out UNDER that - so there is never a dead frame between intent and result.
   function begin(){
-    if(ov.classList.contains('is-started')) return;
-    ov.classList.add('is-started');                       // fades the card out
+    if(starting || ov.classList.contains('is-started')) return;
+    starting=true; ov.classList.add('is-started');
     try{ vid.currentTime=0; }catch(_){}
     vid.muted=false; ov.classList.add('is-sound');
-    var p=vid.play(); if(p&&p.catch) p.catch(goMuted);    // fallback only if the gesture somehow did not count
+    var p=vid.play(); if(p&&p.catch) p.catch(goMuted);   // fires on THIS gesture, so audio is unlocked
+    if(cur && G) G.killTweensOf(cur);
+    if(!G || reduce){ if(startCard) startCard.style.display='none'; return; }
+    // If the clip needs buffering, say so on the button instead of freezing on a dead card.
+    if(vid.readyState < 3 && go){ go.setAttribute('disabled',''); go.textContent='buffering'; }
+    var tout=G.timeline({defaults:{ease:'power2.inOut'},
+      onComplete:function(){ if(startCard) startCard.style.display='none'; }});
+    tout.to(go,{scale:.97,duration:.09,ease:'power2.in'})
+        .to(ide,{y:-10,scale:.985,autoAlpha:0,duration:.44},'-=.02')
+        .to(pass,{autoAlpha:0,duration:.24},'<')
+        .to(startCard,{autoAlpha:0,duration:.34},'-=.28');
   }
   if(go) go.addEventListener('click', function(e){ e.stopPropagation(); begin(); });
   if(pass) pass.addEventListener('click', function(e){ e.stopPropagation(); finish(); });
-  if(startCard) startCard.addEventListener('click', begin);   // anywhere on the card starts it
-  // Keyboard: Enter/Space starts, Esc skips. The card owns focus so this never fights the page.
+  if(startCard) startCard.addEventListener('click', begin);   // the whole card is the target
+  // Keyboard: any key starts (Enter/Space are the obvious ones), Esc skips.
   document.addEventListener('keydown', function(e){
     if(done) return;
     if(!ov.classList.contains('is-started')){
       if(e.key==='Escape'){ e.preventDefault(); finish(); return; }
+      if(e.key==='Tab') return;                               // let focus move normally
       e.preventDefault(); begin();
     } else if(e.key==='Escape'){ finish(); }
   }, true);
-  try{ if(go) go.focus(); }catch(_){}
+  try{ if(go) go.focus({preventScroll:true}); }catch(_){ try{ go.focus(); }catch(__){} }
   function unmute(){
     if(!vid.muted) return;
     vid.muted=false; ov.classList.remove('need-sound','need-tap'); ov.classList.add('is-sound');
@@ -2182,18 +2183,24 @@
        policy), then the hero reveal fires WITH sound. On-brand terminal boot, not a cookie
        banner. If audio is already allowed (high MEI / PWA / Firefox) this NEVER shows and the
        reveal just plays. -->
-  <div class="boot" id="bootGate" role="dialog" aria-modal="true" aria-label="Enter portfolio" hidden>
-    <div class="boot__scan" aria-hidden="true"></div>
-    <div class="boot__card" tabindex="-1">
-      <div class="boot__head"><span class="boot__mark">&gt;_</span><span class="boot__sys">ryan.sys</span><span class="boot__badge">SOUND ON</span></div>
-      <div class="boot__body">
-        <p class="boot__line" id="bootL1">booting portfolio<span class="boot__dots"><i>.</i><i>.</i><i>.</i></span></p>
-        <p class="boot__line boot__line--dim" id="bootL2">three hats. one habit: make it real.</p>
-        <p class="boot__prompt" id="bootPrompt">&gt; press <b>[ enter ]</b><span class="boot__cur">&#9608;</span> <span class="boot__or">or tap to run</span></p>
+  <!-- Reload gate. The visitor has already seen the site, so this is deliberately the TERSE
+       member of the family: one line of context, one primary action, one quiet alternative.
+       Same IDE chrome as the intro so it is recognisably the same product. -->
+  <div class="boot" id="bootGate" role="dialog" aria-modal="true" aria-label="Continue with sound" hidden>
+    <div class="ide ide--boot" tabindex="-1">
+      <div class="ide__bar">
+        <span class="lamps" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="ide__file">ryan.sys</span>
       </div>
-      <button type="button" class="boot__go" id="bootGo" aria-label="Run portfolio with sound">run<span aria-hidden="true"> &#9654;</span></button>
-      <button type="button" class="boot__mute" id="bootMute" aria-label="Enter without sound">enter muted</button>
+      <div class="ide__code">
+        <p class="ide__ln"><span class="k">&gt;</span> resume session<span class="ide__cur" id="bootCur"></span></p>
+      </div>
+      <div class="ide__foot">
+        <button type="button" class="ide__run" id="bootGo">Continue<span aria-hidden="true"> &#9654;</span></button>
+        <span class="ide__meta">sound on</span>
+      </div>
     </div>
+    <button type="button" class="introv__pass" id="bootMute">continue muted</button>
   </div>
 
   <!-- EXIT REACTION: appears once per session AFTER the visitor has actually seen the site
@@ -2233,8 +2240,6 @@
   </div>
 </div>
 
-<script src="assets/vendor/gsap.min.js"></script>
-<script src="assets/vendor/ScrollTrigger.min.js"></script>
 <script>
 (function(){
   var reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -3309,6 +3314,8 @@
     // stalls (reverseRun had NO watchdog, unlike startPortraitReveal - that was the hole).
     var finished=false;
     function fin(){ if(finished) return; finished=true; if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; }
+      // never leave the pop's transform on the canvas if this run was cut short
+      try{ if(window.gsap && faceFx){ gsap.killTweensOf(faceFx); gsap.set(faceFx,{scale:1,clearProps:'transform'}); } }catch(_){}
       if(faceFrame) faceFrame.classList.remove('is-photo-live'); if(done) done(); }
     if(revealWatch){ clearTimeout(revealWatch); }
     revealWatch=setTimeout(function(){ revealWatch=0; if(finished) return;
@@ -3320,6 +3327,13 @@
       tl.add(function(){ try{ playSound('reform'); }catch(_){} }, LEAD_HOLD);                                       // photo -> mosaic
       tl.to(a,{p:0,duration:D_EXPLODE,ease:E_MASTER,onUpdate:function(){ drawFx('explode',a.p,true); }}, LEAD_HOLD);
       tl.add(function(){ drawFx('explode',0,true); if(faceFrame) faceFrame.classList.remove('is-photo-live'); }, LEAD_HOLD+D_EXPLODE);  // full mosaic; drop the now-hidden photo
+      // THE POP (Ryan's sequence: portrait -> mosaic -> POP -> ascii). Per-tile overshoot was
+      // the wrong lever - it is camouflaged because the mosaic lands on the photo it was
+      // sampled from. This is a WHOLE-LAYER beat instead: the moment the full mosaic stands,
+      // the canvas punches out and springs back, and the ascii arrives out of that recoil.
+      // Transform-only, so it is compositor-cheap and cannot touch the tile raster.
+      tl.to(faceFx,{scale:1.04,duration:.13,ease:'power2.out',transformOrigin:'50% 50%'}, LEAD_HOLD+D_EXPLODE)
+        .to(faceFx,{scale:1,duration:.42,ease:'back.out(2.6)'}, LEAD_HOLD+D_EXPLODE+.13);
       tl.add(function(){ try{ playSound('dissolve'); }catch(_){} }, LEAD_HOLD+D_EXPLODE+PIVOT_HOLD);                // mosaic -> ascii
       tl.to(b,{p:0,duration:D_IMPLODE,ease:E_MASTER,onUpdate:function(){ drawFx('implode',b.p,true); }}, LEAD_HOLD+D_EXPLODE+PIVOT_HOLD);
       tl.add(function(){ drawRest(); fin(); }, LEAD_HOLD+D_EXPLODE+PIVOT_HOLD+D_IMPLODE);
@@ -3737,26 +3751,47 @@
   // are audible - full UX with sound on every reload (Ryan). Returns true if it showed.
   function showBootGate(onEnter){
     var el=document.getElementById('bootGate'); if(!el) return false;
-    var card=el.querySelector('.boot__card'),
+    var card=el.querySelector('.ide'),
+        line=el.querySelector('.ide__ln'),
+        cur=document.getElementById('bootCur'),
         go=document.getElementById('bootGo'), mute=document.getElementById('bootMute');
-    var done=false;
-    el.hidden=false;
-    requestAnimationFrame(function(){ el.classList.add('is-show'); });
-    try{ card && card.focus(); }catch(_){}
+    var G=window.gsap, done=false;
+    el.hidden=false; el.classList.add('is-show');
+    // ENTRANCE (GSAP). Same motion language as the intro window, shorter because this is the
+    // repeat visit: the visitor wants back in, not a performance.
+    if(G && !reduce){
+      G.set(el,{autoAlpha:1});
+      G.timeline({defaults:{ease:'power3.out'}})
+       .from(card,{y:16,scale:.97,autoAlpha:0,duration:.42})
+       .from(line,{y:5,autoAlpha:0,duration:.28},'-=.18')
+       .from([go,mute],{y:5,autoAlpha:0,duration:.3,stagger:.05},'-=.14');
+      if(cur) G.to(cur,{autoAlpha:0,duration:.5,ease:'steps(1)',repeat:-1,yoyo:true,delay:.6});
+    } else { el.style.opacity=1; }
+    try{ go && go.focus({preventScroll:true}); }catch(_){}
     function cleanup(){ document.removeEventListener('keydown', onKey, true); el.removeEventListener('click', onBg);
       if(go) go.removeEventListener('click', onGo); if(mute) mute.removeEventListener('click', onMute); }
+    function hide(){
+      if(G && !reduce){
+        if(cur) G.killTweensOf(cur);
+        G.timeline({defaults:{ease:'power2.inOut'},
+          onComplete:function(){ el.hidden=true; el.classList.remove('is-show'); }})
+         .to(go,{scale:.97,duration:.09,ease:'power2.in'})
+         .to(card,{y:-8,scale:.985,autoAlpha:0,duration:.38},'-=.02')
+         .to(mute,{autoAlpha:0,duration:.2},'<')
+         .to(el,{autoAlpha:0,duration:.3},'-=.24');
+      } else { el.hidden=true; el.classList.remove('is-show'); }
+    }
     function finish(withSound){
       if(done) return; done=true; cleanup();
       if(withSound){ try{ armAudio(); }catch(_){} }                                  // unlock + prime on THIS gesture
       else { window.__muted=true; try{ if(SS) SS.setItem('ryan_mute','1'); }catch(_){} }
-      el.classList.add('is-out');
-      setTimeout(function(){ el.hidden=true; el.classList.remove('is-show','is-out'); }, 480);
+      hide();
       if(onEnter) onEnter();                                                          // fire the reveal now (audio unlocked)
     }
-    function onKey(e){ if(e.key==='Escape'||e.key==='Tab') return; e.preventDefault(); finish(true); }   // any other key "runs" it
+    function onKey(e){ if(e.key==='Escape'||e.key==='Tab') return; e.preventDefault(); finish(true); }   // any other key continues
     function onGo(e){ e.stopPropagation(); finish(true); }
     function onMute(e){ e.stopPropagation(); finish(false); }
-    function onBg(){ finish(true); }                                                  // click anywhere on the gate = run
+    function onBg(){ finish(true); }                                                  // click anywhere on the gate = continue
     document.addEventListener('keydown', onKey, true);
     el.addEventListener('click', onBg);
     if(go) go.addEventListener('click', onGo);
