@@ -1065,9 +1065,19 @@
   /* The boot gate reuses the .ide window wholesale (see the IDE block below) so the reload
      prompt and the first-visit intro are visibly the same object. Only the width differs:
      this one is a single line, so a narrower window reads as "quick", not as a wall. */
-  .ide--boot{width:min(92vw,380px)}
-  .ide--boot .ide__code{padding-bottom:2px}
+  .ide--boot{width:min(92vw,400px)}
+  .ide--boot .ide__code{padding-bottom:2px;min-height:104px}   /* reserve the output rows so the window never resizes mid-run (CLS + it would feel unstable) */
   .ide--boot:focus{outline:none}
+  .bootcmd .p{color:var(--signal)}                              /* the prompt: the one accent */
+  .bootcmd{transition:color .2s ease}
+  .ide__run:hover ~ .ide__meta,.ide--boot:hover .bootcmd{color:var(--fg)}   /* hovering the action pre-lights the command it will run */
+  .bootout{color:rgba(236,231,219,.5)}
+  .bootout b{color:rgba(236,231,219,.85);font-weight:400}
+  .bootout .lead{color:rgba(236,231,219,.2)}
+  .bootok{color:var(--signal)}
+  .ide__run kbd{display:inline-block;margin-right:7px;padding:1px 6px;border-radius:4px;
+    border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);
+    font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--fg)}
   @keyframes bootblink{0%,55%{opacity:1}56%,100%{opacity:0}}
 
   /* ---- EXIT REACTION ---- */
@@ -2186,18 +2196,25 @@
   <!-- Reload gate. The visitor has already seen the site, so this is deliberately the TERSE
        member of the family: one line of context, one primary action, one quiet alternative.
        Same IDE chrome as the intro so it is recognisably the same product. -->
-  <div class="boot" id="bootGate" role="dialog" aria-modal="true" aria-label="Continue with sound" hidden>
+  <div class="boot" id="bootGate" role="dialog" aria-modal="true" aria-label="Resume with sound" hidden>
     <div class="ide ide--boot" tabindex="-1">
       <div class="ide__bar">
         <span class="lamps" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="ide__file">ryan.sys</span>
       </div>
       <div class="ide__code">
-        <p class="ide__ln"><span class="k">&gt;</span> resume session<span class="ide__cur" id="bootCur"></span></p>
+        <!-- A command the visitor RUNS, not a label they acknowledge. The cursor blinks at the
+             end of it, so the window reads as waiting for them. -->
+        <p class="ide__ln bootcmd" id="bootCmd"><span class="p">$</span> ryan --resume --sound<span class="ide__cur" id="bootCur"></span></p>
+        <!-- Output. Hidden until the command is run, then streamed in: this is the CONSEQUENCE
+             of the click, which is what the old "fade out and leave" had none of. -->
+        <p class="ide__ln bootout">audio <span class="lead">.........</span> <b>unlocked</b></p>
+        <p class="ide__ln bootout">session <span class="lead">.......</span> <b>restored</b></p>
+        <p class="ide__ln bootout bootok">ready</p>
       </div>
       <div class="ide__foot">
-        <button type="button" class="ide__run" id="bootGo">Continue<span aria-hidden="true"> &#9654;</span></button>
-        <span class="ide__meta">sound on</span>
+        <button type="button" class="ide__run" id="bootGo"><kbd aria-hidden="true">&#9166;</kbd> Run</button>
+        <span class="ide__meta">or click anywhere</span>
       </div>
     </div>
     <button type="button" class="introv__pass" id="bootMute">continue muted</button>
@@ -3752,31 +3769,44 @@
   function showBootGate(onEnter){
     var el=document.getElementById('bootGate'); if(!el) return false;
     var card=el.querySelector('.ide'),
-        line=el.querySelector('.ide__ln'),
+        cmd=document.getElementById('bootCmd'),
+        outs=el.querySelectorAll('.bootout'),
         cur=document.getElementById('bootCur'),
         go=document.getElementById('bootGo'), mute=document.getElementById('bootMute');
     var G=window.gsap, done=false;
     el.hidden=false; el.classList.add('is-show');
     // ENTRANCE (GSAP). Same motion language as the intro window, shorter because this is the
-    // repeat visit: the visitor wants back in, not a performance.
+    // repeat visit: the visitor wants back in, not a performance. The output rows start
+    // hidden - they are the RESULT of running the command, so they must not pre-empt it.
     if(G && !reduce){
       G.set(el,{autoAlpha:1});
+      G.set(outs,{autoAlpha:0,y:4});
       G.timeline({defaults:{ease:'power3.out'}})
        .from(card,{y:16,scale:.97,autoAlpha:0,duration:.42})
-       .from(line,{y:5,autoAlpha:0,duration:.28},'-=.18')
+       .from(cmd,{y:5,autoAlpha:0,duration:.28},'-=.18')
        .from([go,mute],{y:5,autoAlpha:0,duration:.3,stagger:.05},'-=.14');
       if(cur) G.to(cur,{autoAlpha:0,duration:.5,ease:'steps(1)',repeat:-1,yoyo:true,delay:.6});
-    } else { el.style.opacity=1; }
+    } else { el.style.opacity=1; if(G) G.set(outs,{autoAlpha:0}); }
     try{ go && go.focus({preventScroll:true}); }catch(_){}
     function cleanup(){ document.removeEventListener('keydown', onKey, true); el.removeEventListener('click', onBg);
       if(go) go.removeEventListener('click', onGo); if(mute) mute.removeEventListener('click', onMute); }
-    function hide(){
+    // RUN. The click has to have a CONSEQUENCE, not just dismiss the window: the command the
+    // visitor was looking at actually executes and reports back. Button depresses on the same
+    // frame as the input (immediate feedback), the caret stops, the output streams, then the
+    // window leaves. ~0.5s of real payoff instead of a bare fade.
+    function hide(ran){
       if(G && !reduce){
         if(cur) G.killTweensOf(cur);
-        G.timeline({defaults:{ease:'power2.inOut'},
-          onComplete:function(){ el.hidden=true; el.classList.remove('is-show'); }})
-         .to(go,{scale:.97,duration:.09,ease:'power2.in'})
-         .to(card,{y:-8,scale:.985,autoAlpha:0,duration:.38},'-=.02')
+        var t=G.timeline({defaults:{ease:'power2.inOut'},
+          onComplete:function(){ el.hidden=true; el.classList.remove('is-show'); }});
+        t.to(go,{scale:.96,duration:.07,ease:'power2.in'})                 // press
+         .to(go,{scale:1,duration:.16,ease:'back.out(3)'});                // release
+        if(ran){
+          t.to(cur,{autoAlpha:0,duration:.08},'-=.16')                     // caret stops: it is executing
+           .to(outs,{autoAlpha:1,y:0,duration:.16,stagger:.085,ease:'power2.out'},'-=.06')
+           .to({},{duration:.16});                                         // let "ready" land before leaving
+        }
+        t.to(card,{y:-8,scale:.985,autoAlpha:0,duration:.36})
          .to(mute,{autoAlpha:0,duration:.2},'<')
          .to(el,{autoAlpha:0,duration:.3},'-=.24');
       } else { el.hidden=true; el.classList.remove('is-show'); }
@@ -3785,8 +3815,11 @@
       if(done) return; done=true; cleanup();
       if(withSound){ try{ armAudio(); }catch(_){} }                                  // unlock + prime on THIS gesture
       else { window.__muted=true; try{ if(SS) SS.setItem('ryan_mute','1'); }catch(_){} }
-      hide();
-      if(onEnter) onEnter();                                                          // fire the reveal now (audio unlocked)
+      hide(withSound);
+      // Start the reveal WITH the output stream, not after it. The reveal opens on its own
+      // static lead-hold, so the window clearing over the top of it costs the visitor nothing
+      // and the gate never reads as a wait.
+      if(onEnter) onEnter();
     }
     function onKey(e){ if(e.key==='Escape'||e.key==='Tab') return; e.preventDefault(); finish(true); }   // any other key continues
     function onGo(e){ e.stopPropagation(); finish(true); }
