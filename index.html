@@ -997,6 +997,93 @@
   @media (max-width:760px){ .sndhint{right:10px;bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))} }
   @media (prefers-reduced-motion:reduce){ .sndhint{transition:none} .sndhint__dot{animation:none} }
 
+  /* ---- BOOT GATE (reload audio-consent, terminal boot) ---- */
+  .boot{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(120% 90% at 50% 40%, rgba(16,17,21,.94), rgba(7,8,10,.97) 70%, rgba(5,6,7,.99));
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    opacity:0;transition:opacity .5s ease;cursor:pointer;pointer-events:none}
+  .boot.is-show{opacity:1;pointer-events:auto}
+  .boot.is-out{opacity:0;pointer-events:none}
+  /* [hidden] must win over the display:flex above (equal specificity -> place last), else the
+     invisible overlay stays in the layout and blocks clicks on the whole site after dismissal. */
+  .boot[hidden]{display:none}
+  .boot__scan{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px)}
+  .boot__card{position:relative;width:min(92vw,440px);padding:26px 26px 20px;border-radius:14px;
+    border:1px solid rgba(255,255,255,.09);
+    background:linear-gradient(180deg, rgba(20,21,26,.9), rgba(12,13,16,.92));
+    box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+    text-align:left;outline:none;transform:translateY(10px) scale(.985);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .boot.is-show .boot__card{transform:none}
+  .boot__head{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:rgba(236,231,219,.55);margin-bottom:16px}
+  .boot__mark{color:var(--fg);font-weight:700;letter-spacing:0}
+  .boot__mark::after{content:"";display:inline-block;width:6px;height:12px;margin-left:2px;vertical-align:-1px;
+    background:var(--signal);box-shadow:0 0 8px rgba(255,42,18,.7);animation:bootblink 1.1s steps(1) infinite}
+  @keyframes bootblink{0%,55%{opacity:1}56%,100%{opacity:0}}
+  .boot__sys{flex:1}
+  .boot__badge{font-size:9.5px;padding:3px 7px;border-radius:5px;color:var(--signal);
+    border:1px solid rgba(255,42,18,.4);background:rgba(255,42,18,.08);letter-spacing:.12em}
+  .boot__body{font-family:var(--mono);font-size:13px;line-height:1.6;color:rgba(236,231,219,.9)}
+  .boot__line{margin:0 0 2px}
+  .boot__line--dim{color:rgba(236,231,219,.5);margin-bottom:16px;font-size:12px}
+  .boot__dots i{opacity:0;animation:bootdots 1.4s steps(1) infinite}
+  .boot__dots i:nth-child(2){animation-delay:.2s}.boot__dots i:nth-child(3){animation-delay:.4s}
+  @keyframes bootdots{0%,80%{opacity:0}20%,60%{opacity:1}}
+  .boot__prompt{margin:0;font-size:14px;color:var(--fg)}
+  .boot__prompt b{color:var(--signal);font-weight:700}
+  .boot__cur{display:inline-block;width:8px;height:15px;margin-left:1px;vertical-align:-2px;background:var(--fg);
+    animation:bootblink 1.1s steps(1) infinite}
+  .boot__or{color:rgba(236,231,219,.4);font-size:12px;margin-left:6px}
+  .boot__go{margin-top:20px;width:100%;padding:13px;border-radius:9px;border:1px solid rgba(255,42,18,.5);
+    background:linear-gradient(180deg, rgba(255,42,18,.16), rgba(255,42,18,.09));color:var(--fg);
+    font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;
+    transition:background .2s ease,transform .12s ease,box-shadow .2s ease}
+  .boot__go:hover{background:linear-gradient(180deg, rgba(255,42,18,.28), rgba(255,42,18,.16));
+    box-shadow:0 0 24px rgba(255,42,18,.3)}
+  .boot__go:active{transform:translateY(1px)}
+  .boot__mute{display:block;margin:11px auto 0;padding:4px;border:0;background:none;cursor:pointer;
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(236,231,219,.4);transition:color .2s ease}
+  .boot__mute:hover{color:rgba(236,231,219,.75)}
+  @media (prefers-reduced-motion:reduce){ .boot,.boot__card{transition:none} .boot__mark::after,.boot__cur,.boot__dots i{animation:none} .boot__cur{opacity:1} }
+
+  /* ---- EXIT REACTION ---- */
+  .react{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:1500;
+    width:min(90vw,320px);padding:16px 16px 14px;border-radius:13px;
+    border:1px solid rgba(255,255,255,.1);
+    background:linear-gradient(180deg, rgba(22,23,28,.92), rgba(13,14,17,.92));
+    -webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);
+    box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+    opacity:0;transform:translateY(14px) scale(.98);pointer-events:none;
+    transition:opacity .45s ease,transform .45s cubic-bezier(.2,.8,.2,1)}
+  .react.is-show{opacity:1;transform:none;pointer-events:auto}
+  .react__x{position:absolute;top:8px;right:10px;border:0;background:none;color:rgba(236,231,219,.4);
+    font-size:18px;line-height:1;cursor:pointer;padding:2px 4px;transition:color .2s ease}
+  .react__x:hover{color:rgba(236,231,219,.8)}
+  .react__q{margin:0 0 12px;font-family:var(--disp);font-size:16px;font-weight:600;color:var(--fg);letter-spacing:.01em}
+  .react__row{display:flex;gap:7px;flex-wrap:wrap}
+  .react__chip{flex:1 1 auto;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);color:rgba(236,231,219,.85);
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;cursor:pointer;white-space:nowrap;
+    transition:background .18s ease,border-color .18s ease,transform .12s ease}
+  .react__chip::before{content:attr(data-emoji) " ";}
+  .react__chip:hover{background:rgba(255,42,18,.1);border-color:rgba(255,42,18,.4);color:var(--fg)}
+  .react__chip:active{transform:translateY(1px)}
+  .react__chip.is-picked{background:rgba(255,42,18,.18);border-color:rgba(255,42,18,.6);color:var(--fg)}
+  .react__note{display:flex;gap:6px;margin-top:11px;opacity:0;max-height:0;overflow:hidden;
+    transition:opacity .3s ease,max-height .3s ease}
+  .react__note.is-open{opacity:1;max-height:60px}
+  .react__note input{flex:1;min-width:0;padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.12);
+    background:rgba(0,0,0,.25);color:var(--fg);font-family:var(--mono);font-size:12px}
+  .react__note input:focus{outline:none;border-color:rgba(255,42,18,.5)}
+  .react__send{padding:8px 12px;border-radius:7px;border:1px solid rgba(255,42,18,.5);
+    background:rgba(255,42,18,.12);color:var(--fg);font-family:var(--mono);font-size:11px;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .18s ease}
+  .react__send:hover{background:rgba(255,42,18,.22)}
+  .react__thanks{margin:6px 0 0;font-family:var(--mono);font-size:12px;color:rgba(236,231,219,.7);letter-spacing:.03em}
+  @media (prefers-reduced-motion:reduce){ .react,.react__note{transition:none} }
+
   @media (max-width:900px){
     .bar nav{display:none}
     .hero__portrait{transform:translate(-50%,-56%);width:clamp(240px,66vw,340px)}
@@ -1979,6 +2066,44 @@
     <span class="sndhint__dot" aria-hidden="true"></span>Click for sound
   </div>
 
+  <!-- BOOT GATE: shown only on a reload where the browser's autoplay policy has audio LOCKED.
+       One deliberate keypress/tap "runs" the portfolio - that gesture unlocks audio (Chrome
+       policy), then the hero reveal fires WITH sound. On-brand terminal boot, not a cookie
+       banner. If audio is already allowed (high MEI / PWA / Firefox) this NEVER shows and the
+       reveal just plays. -->
+  <div class="boot" id="bootGate" role="dialog" aria-modal="true" aria-label="Enter portfolio" hidden>
+    <div class="boot__scan" aria-hidden="true"></div>
+    <div class="boot__card" tabindex="-1">
+      <div class="boot__head"><span class="boot__mark">&gt;_</span><span class="boot__sys">ryan.sys</span><span class="boot__badge">SOUND ON</span></div>
+      <div class="boot__body">
+        <p class="boot__line" id="bootL1">booting portfolio<span class="boot__dots"><i>.</i><i>.</i><i>.</i></span></p>
+        <p class="boot__line boot__line--dim" id="bootL2">three hats. one habit: make it real.</p>
+        <p class="boot__prompt" id="bootPrompt">&gt; press <b>[ enter ]</b><span class="boot__cur">&#9608;</span> <span class="boot__or">or tap to run</span></p>
+      </div>
+      <button type="button" class="boot__go" id="bootGo" aria-label="Run portfolio with sound">run<span aria-hidden="true"> &#9654;</span></button>
+      <button type="button" class="boot__mute" id="bootMute" aria-label="Enter without sound">enter muted</button>
+    </div>
+  </div>
+
+  <!-- EXIT REACTION: appears once per session AFTER the visitor has actually seen the site
+       (reached the contact section, or exit-intent). A one-tap reaction Ryan can read remotely
+       (POSTed to an ntfy.sh topic - no signup, low security, by design). Marketing: real signal
+       AFTER they've experienced it, not a premature "rate me" up front. -->
+  <div class="react" id="exitReact" role="dialog" aria-label="React to the portfolio" hidden>
+    <button type="button" class="react__x" id="reactX" aria-label="Dismiss">&times;</button>
+    <p class="react__q">Worth your scroll?</p>
+    <div class="react__row" id="reactRow">
+      <button type="button" class="react__chip" data-react="hire" data-emoji="&#9889;">hire-worthy</button>
+      <button type="button" class="react__chip" data-react="solid" data-emoji="&#128064;">solid</button>
+      <button type="button" class="react__chip" data-react="meh" data-emoji="&#129300;">meh</button>
+    </div>
+    <div class="react__note" id="reactNote">
+      <input type="text" id="reactMsg" maxlength="140" placeholder="drop a note (optional)" aria-label="Optional note" />
+      <button type="button" class="react__send" id="reactSend">send</button>
+    </div>
+    <p class="react__thanks" id="reactThanks" hidden>logged. thanks for the signal.</p>
+  </div>
+
   <div class="pmodal" id="projModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Project detail">
     <div class="pmodal__scrim" data-close></div>
     <div class="pmodal__win" id="pmodalWin">
@@ -2260,7 +2385,7 @@
     else { b.el.volume=target; if(target===0){ try{ b.el.pause(); }catch(_){} } }
   }
   function bedSet(name,on,gain){
-    if(reduce || !soundState.enabled || !BEDS[name]) return;
+    if(reduce || window.__muted || !soundState.enabled || !BEDS[name]) return;
     var b=beds[name];
     // preload='none': a bed only fetches when it is actually played. 'auto' made all four
     // download up-front and fight the hero reveal for bandwidth.
@@ -2294,6 +2419,7 @@
   window.__amb = function(on){ bedSet('amb',on); };
   window.__bed = bedSet;
   function playSound(kind){
+    if(window.__muted) return;                 // "enter muted" chose no sound this session (boot gate)
     var gap = { hover:70, scroll:260, focus:160, press:80, key:120, nav:40, tick:45, peek:200,
                 flip:120, node:150, dissolve:300, reform:300, shard:400,
                 dock:260, undock:260 }[kind] || 28;   // gated: a scroll wiggle at the boundary must not chatter
@@ -3484,21 +3610,55 @@
   // SYNC the reveal to the first real gesture (which also unlocks + primes audio), so the
   // transition plays WITH sound. Idle visitor: reveal anyway after a beat (silent, nobody is
   // listening). Fresh-session (hook) path is untouched - it still calls startPortraitReveal.
+  // Terminal BOOT GATE (reload audio-consent). A returning visitor's reload has NO hook to
+  // unlock audio, and Chrome only unlocks on a real click/tap/key. So instead of firing the
+  // reveal silently, we show a one-action terminal overlay; that gesture unlocks audio
+  // (armAudio, already bound capture-phase) and THEN we fire the reveal so its dissolve/reform
+  // are audible - full UX with sound on every reload (Ryan). Returns true if it showed.
+  function showBootGate(onEnter){
+    var el=document.getElementById('bootGate'); if(!el) return false;
+    var card=el.querySelector('.boot__card'),
+        go=document.getElementById('bootGo'), mute=document.getElementById('bootMute');
+    var done=false;
+    el.hidden=false;
+    requestAnimationFrame(function(){ el.classList.add('is-show'); });
+    try{ card && card.focus(); }catch(_){}
+    function cleanup(){ document.removeEventListener('keydown', onKey, true); el.removeEventListener('click', onBg);
+      if(go) go.removeEventListener('click', onGo); if(mute) mute.removeEventListener('click', onMute); }
+    function finish(withSound){
+      if(done) return; done=true; cleanup();
+      if(withSound){ try{ armAudio(); }catch(_){} }                                  // unlock + prime on THIS gesture
+      else { window.__muted=true; try{ if(SS) SS.setItem('ryan_mute','1'); }catch(_){} }
+      el.classList.add('is-out');
+      setTimeout(function(){ el.hidden=true; el.classList.remove('is-show','is-out'); }, 480);
+      if(onEnter) onEnter();                                                          // fire the reveal now (audio unlocked)
+    }
+    function onKey(e){ if(e.key==='Escape'||e.key==='Tab') return; e.preventDefault(); finish(true); }   // any other key "runs" it
+    function onGo(e){ e.stopPropagation(); finish(true); }
+    function onMute(e){ e.stopPropagation(); finish(false); }
+    function onBg(){ finish(true); }                                                  // click anywhere on the gate = run
+    document.addEventListener('keydown', onKey, true);
+    el.addEventListener('click', onBg);
+    if(go) go.addEventListener('click', onGo);
+    if(mute) mute.addEventListener('click', onMute);
+    return true;
+  }
   function startReloadReveal(){
-    // The hero flip ALWAYS fires immediately on reload (snappy - Ryan hated any wait). Audio
-    // is a separate matter: a plain reload has no hook to unlock it, and browsers only unlock
-    // on a click/tap/key (hover/scroll never count). So we detect whether the browser will
-    // allow AUDIBLE autoplay now - `getAutoplayPolicy` (Firefox), an already-activated doc,
-    // a high desktop Media Engagement Index (a returning visitor who let the 10s intro play,
-    // on a real http(s) origin - `file://` never accrues MEI), or an installed PWA. If so,
-    // the transition's dissolve/reform simply PLAY. If not, we show a subtle "click for sound"
-    // nudge (soundNudge) - the honest, standard pattern (mirrors the intro video's need-sound).
-    startPortraitReveal();
-    if(reduce) return;
+    // Reduced motion: no reveal animation + no sound to gate - just show the photo.
+    if(reduce){ startPortraitReveal(); return; }
+    // Honor a prior "enter muted" choice this session: no gate, reveal silently.
+    try{ if(SS && SS.getItem('ryan_mute')==='1'){ window.__muted=true; startPortraitReveal(); return; } }catch(_){}
+    // Will the browser allow AUDIBLE autoplay right now? `getAutoplayPolicy` (Firefox), an
+    // already-activated doc, a high desktop MEI (returning visitor who let the intro play, on a
+    // real http(s) origin - `file://` never accrues MEI), or an installed PWA. If YES, the
+    // transition simply plays with sound - NO gate (seamless for high-engagement returns).
     var allowed=false;
     try{ if(navigator.getAutoplayPolicy) allowed = navigator.getAutoplayPolicy('mediaelement')==='allowed'; }catch(_){}
     try{ if(!allowed && navigator.userActivation && navigator.userActivation.hasBeenActive) allowed=true; }catch(_){}
-    if(!allowed) soundNudge();   // self-cancels at show-time if a cue actually resolved (PWA/MEI let the transition play)
+    if(allowed){ startPortraitReveal(); return; }
+    // Audio LOCKED: gate the reveal behind the boot interaction so its SFX are audible.
+    // Fallback (gate markup missing): old behaviour - fire now + the passive "click for sound".
+    if(!showBootGate(function(){ startPortraitReveal(); })){ startPortraitReveal(); soundNudge(); }
   }
   // Subtle "click for sound" hint, shown only when audio is genuinely locked on a reload.
   // Dismissed (and never re-shown this session) on the first activation, which also unlocks
@@ -3705,6 +3865,73 @@
     var t=setInterval(function(){
       if(document.body.classList.contains('site-ready')){ clearInterval(t); setTimeout(show,1400); }
     }, 300);
+  })();
+
+  /* EXIT REACTION: once per session, AFTER the visitor has actually experienced the site
+     (reached #contact, or exit-intent toward the top). A one-tap reaction Ryan reads remotely
+     via an ntfy.sh topic (no signup, low security, by design - Ryan's call). Real marketing
+     signal comes AFTER they've seen it, not a premature "rate me" up front. */
+  (function(){
+    // --- where reactions go. Ryan: open this URL (or the ntfy app) on your phone to watch:
+    //     https://ntfy.sh/ryan-portfolio-signal-8k3xq2   (change the topic to your own) ---
+    var REACT_TOPIC='ryan-portfolio-signal-8k3xq2';
+    var box=document.getElementById('exitReact'); if(!box) return;
+    var seen=false; try{ seen = SS && SS.getItem('ryan_reactseen')==='1'; }catch(_){}
+    if(seen) return;
+    var row=document.getElementById('reactRow'), note=document.getElementById('reactNote'),
+        msg=document.getElementById('reactMsg'), send=document.getElementById('reactSend'),
+        thanks=document.getElementById('reactThanks'), x=document.getElementById('reactX');
+    var TAGS={ hire:'zap', solid:'eyes', meh:'thinking_face' };
+    var shown=false, picked=null;
+    function post(reaction, emoji, text){
+      try{
+        fetch('https://ntfy.sh', { method:'POST', keepalive:true,
+          body: JSON.stringify({ topic:REACT_TOPIC,
+            title:'Portfolio: '+reaction,
+            message:(text?text:'(no note)')+'  —  '+((location.host)||'local')+((navigator.userAgent&&/Mobi/.test(navigator.userAgent))?' · mobile':''),
+            tags:[TAGS[reaction]||'star'] }) }).catch(function(){});
+      }catch(_){}
+    }
+    function markSeen(){ try{ if(SS) SS.setItem('ryan_reactseen','1'); }catch(_){} }
+    function hide(){ box.classList.remove('is-show'); markSeen(); setTimeout(function(){ box.hidden=true; }, 480); }
+    function show(){ if(shown) return; shown=true; box.hidden=false;
+      requestAnimationFrame(function(){ box.classList.add('is-show'); }); }
+    function commit(text){
+      if(!picked) return;
+      post(picked.r, picked.e, text||'');
+      row.style.pointerEvents='none';
+      if(note) note.classList.remove('is-open');
+      if(thanks) thanks.hidden=false;
+      markSeen();
+      setTimeout(hide, 1500);
+    }
+    if(row) row.addEventListener('click', function(e){
+      var chip=e.target.closest('.react__chip'); if(!chip) return;
+      try{ playSound('toggle'); }catch(_){}
+      [].forEach.call(row.querySelectorAll('.react__chip'), function(c){ c.classList.remove('is-picked'); });
+      chip.classList.add('is-picked');
+      picked={ r:chip.getAttribute('data-react'), e:chip.getAttribute('data-emoji') };
+      // capture the core signal immediately (most people tap and leave), then invite a note
+      post(picked.r, picked.e, '');
+      markSeen();
+      if(note){ note.classList.add('is-open'); if(msg){ try{ msg.focus(); }catch(_){} } }
+    });
+    if(send) send.addEventListener('click', function(){ try{ playSound('nav'); }catch(_){} commit(msg&&msg.value.trim()); });
+    if(msg) msg.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); commit(msg.value.trim()); } });
+    if(x) x.addEventListener('click', function(){ try{ playSound('toggle'); }catch(_){} hide(); });
+    // Trigger 1: reached the contact section (they scrolled the whole thing).
+    var target=document.getElementById('contact');
+    if(target && 'IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(en){ en.forEach(function(t){
+        if(t.isIntersecting){ io.disconnect(); setTimeout(show, 900); } }); }, { threshold:0.35 });
+      // only start watching after the site is up, so it never races the hook/hero
+      var w=setInterval(function(){ if(document.body.classList.contains('site-ready')){ clearInterval(w); io.observe(target); } }, 400);
+    }
+    // Trigger 2: desktop exit-intent (cursor leaves toward the top / address bar).
+    document.addEventListener('mouseout', function(e){
+      if(shown || (SS && SS.getItem('ryan_reactseen')==='1')) return;
+      if(e.clientY<=0 && !e.relatedTarget && document.body.classList.contains('site-ready')) show();
+    });
   })();
 
   // Nav: shrink to a floating glass pill once scrolled past the top.
