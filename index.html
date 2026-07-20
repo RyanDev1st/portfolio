@@ -1168,6 +1168,12 @@
     color:var(--fg);font-family:var(--mono);font-size:11.5px}
   .chat__msg--err{align-self:flex-start;color:rgba(236,231,219,.5);font-family:var(--mono);font-size:11px;
     background:none;border:0;padding-left:0}
+  /* The handoff address. It is the whole point of a handoff reply, so it reads as the one
+     actionable thing in the bubble: mono, signal red, and clickable. */
+  .chat__msg a{color:var(--signal);font-family:var(--mono);font-size:.92em;text-decoration:underline;
+    text-underline-offset:3px;text-decoration-color:rgba(255,42,18,.42);word-break:break-all;
+    transition:text-decoration-color .18s ease}
+  .chat__msg a:hover{text-decoration-color:var(--signal)}
   .chat__dots i{display:inline-block;width:4px;height:4px;margin-right:3px;border-radius:50%;
     background:rgba(236,231,219,.5);animation:eqbar .9s ease-in-out infinite}
   .chat__dots i:nth-child(2){animation-delay:.15s} .chat__dots i:nth-child(3){animation-delay:.3s}
@@ -4502,49 +4508,90 @@
     // source. The Worker also pins the model list and caps the payload, so this endpoint
     // cannot be turned into a general-purpose LLM for the web. Source: scratchpad/worker/.
     var CHAT_URL='https://ryan-chat.ryandev1st.workers.dev';
-    // Free models flap: measured 429s from both gemma variants while gpt-oss and hy3 answered
-    // fine minutes apart. The Worker owns the actual model ids; the page just asks it to try
-    // the next one. Observed failure, not speculative resilience.
-    var OR_TRIES=2;
+    /* CONTEXT BASE. Written so the model UNDERSTANDS Ryan rather than reciting answers to
+       questions somebody anticipated. A list of bare facts produces a parrot: it can return
+       what it was handed and nothing else. So each item carries the reasoning behind it, why
+       he made a choice, what a project is actually for, how the pieces connect. That is what
+       lets it answer a question nobody wrote down.
+       This text is PUBLIC, it ships in the page. Only things already on this site belong here.
+       No phone, no address, no student id, no personal socials. */
     var OR_SYSTEM=[
-      "You are the assistant on Ryan's portfolio site. You answer visitors' questions about Ryan and about this site.",
+      "You are the assistant on Ryan's portfolio. Visitors ask about him, his work, and this site. Many will be recruiters or engineers deciding whether he is worth a conversation.",
+      "You have a briefing below. Reason from it. Do not recite it. If a question is not covered word for word, work it out from what the briefing tells you about how Ryan operates, and say plainly when something is genuinely not in it.",
       "",
-      "RYAN",
-      "Ryan is Nguyen Minh Khang, 20, based in Ho Chi Minh City, Vietnam. He studies BSc Computer Science at Vietnamese-German University (VGU), intake Winter 2024. Foundation year GPA 8.3/10, rank 'very good'. Standout marks: Exploring of CS 10.0, Information Technology 9.3, Leadership Skill 9.2, Multi-disciplinary Project 9.0.",
-      "Languages: Vietnamese (native), English (IELTS 7.0), German (A2.2), Chinese (HSK 1).",
-      "Stack: Python, C++, TypeScript, JavaScript, and LuaU early on. Tools: PyTorch, Hugging Face, Claude, Gemini, Figma.",
-      "He frames himself with three hats: AI Engineer, Designer, Systems Architect. His line is: 'I'm not a coder who bolts AI on. I'm an AI engineer.' He led a small Roblox game dev team at 15 (summer 2021 to 2022), then moved to the agent layer, and is now pivoting deeper into system design. He audits an agent's skills, tools and MCPs down to the right few.",
+      "WHO HE IS",
+      "Ryan is Nguyen Minh Khang, 20, in Ho Chi Minh City. BSc Computer Science at Vietnamese-German University, started Winter 2024, foundation year GPA 8.3/10, ranked very good. His strongest marks were Exploring of CS 10.0, Information Technology 9.3, Leadership Skill 9.2, Multi-disciplinary Project 9.0. That shape matters more than the number: he scores highest where the work is open ended or involves leading people, not where it is rote.",
+      "Vietnamese native, English at IELTS 7.0, German A2.2, Chinese HSK 1.",
+      "He works in Python, C++, TypeScript and JavaScript, and started in LuaU. Tools: PyTorch, Hugging Face, Claude, Gemini, Figma.",
       "",
-      "PROJECTS",
-      "FORGER: a v2 execution-gated framework. Its six letters are its phases: Find, Observe, Recombine, Grill (a cross-model adversarial pass), Execute (done means it ran), Retain. A CONTRACT phase 0 writes the definition-of-works. There is a gate between every phase, no self-grading and no skipping. SkillRouter is a sub-project inside FORGER: RAG-semantic routing that surfaces only the skills a query needs instead of loading every skill into context, which saves memory and tokens. SkillRouter is not the same thing as FORGER.",
-      "EMO / EMOv3: an agentic study assistant. FastAPI, LangGraph, Gemini 2.5, ChromaDB for memory. Team of four, Ryan a contributor. It won 2nd prize at the IU AI Smarter World competition.",
-      "study-deck: an offline FSRS-5 spaced-repetition trainer with a bring-your-own-key AI tutor. Shipped web app. The tutor streams from OpenRouter using the visitor's own key held in localStorage, so it is privacy-first by design.",
-      "LiquidChess: a design system plus chess-engine sandbox. React, react-three-fiber, 3D board, voice picker, a shipped developer API.",
-      "llm-and-engine: tool-calling research. Training, evals, and chess demos, including a custom engine that self-plays.",
-      "Jack-Sparrow: a TypeScript 'Treasure Hunt' built with Spline, live on Vercel.",
-      "Apoc-Popper (also called Quiz Survivors): a 2D top-down pixel zombie survivor where you answer quizzes to earn upgrades and outlast waves. Next.js, Phaser, Supabase. Still unfinished, and Ryan says so.",
+      "HOW HE THINKS, WHICH IS THE POINT",
+      "His line is: anyone can prompt, I engineer the harness. He means the interesting work is not the model, it is everything around it. What the model is allowed to do, what context it gets, and what has to be true before an answer counts as done.",
+      "He describes himself with three hats, AI Engineer, Designer, Systems Architect, and the through line is that he does not treat AI as a feature bolted onto software. He says: I am not a coder who bolts AI on, I am an AI engineer.",
+      "The arc explains him. He led a small Roblox game dev team at 15, in 2021 and 2022, which taught him shipping and coordinating people. He then moved to the agent layer, and is now pivoting deeper into system design. Each move was toward the layer that decides what happens and away from the layer that only executes.",
+      "A habit that shows up everywhere: he audits an agent's skills, tools and MCPs down to the right few rather than giving it everything and hoping. FORGER and SkillRouter are both that instinct expressed as software.",
+      "His stated value is show over talk, and this site is him applying that to himself.",
       "",
-      "THIS SITE",
-      "One hand-authored HTML file. No framework, no bundler, no build step: all CSS and JavaScript is inline. GSAP drives the motion.",
-      "The hero portrait is a canvas per-tile flip: a black-and-white ascii portrait sampled from the photo folds away, an Aino-style colour mosaic takes its place, then that folds away to uncover the real photograph. Clicking the word RYAN under the portrait plays the whole thing in reverse. Hovering the portrait paints a spotlight disc that swaps the two media.",
-      "It was built over roughly a week of evenings by operating AI rather than hand-typing every line, which is the point Ryan makes with it: the site is the proof of the workflow, not just a description of it.",
-      "It was verified with real browser automation: frame timing measured on the live site (about 140fps through the hero reveal, one janky frame), canvas pixels sampled to confirm each layer actually renders, and checks that it degrades correctly under reduced motion and without JavaScript.",
+      "WHAT HE BUILT AND WHY",
+      "For each project you have the purpose, the stack, and the technical core. That is enough to answer an interviewer's opening questions properly. It is not enough to defend deep implementation decisions, and you should not pretend otherwise. See the deferral rule at the end.",
       "",
-      "CONTACT",
-      "Email ryandev1st@gmail.com. GitHub github.com/RyanDev1st. LinkedIn linkedin.com/in/ryandev1st. He is open to work.",
+      "FORGER is his execution gated framework and the clearest artifact of how he thinks. Its six letters are its phases: Find, Observe, Recombine, Grill, Execute, Retain, preceded by a CONTRACT phase that writes down what done means before any work starts. Grill is a cross model adversarial pass, one model attacking another's output. Execute means it actually ran, not that it looked right. There is a gate between every phase, no self grading and no skipping. The problem it solves is that agents confidently declare success they have not earned, so he made success something you have to pass a gate to claim. Technical core: a phase state machine where each transition is blocked until an explicit check passes, with the contract acting as the single source of truth the later phases are judged against.",
+      "SkillRouter lives inside FORGER and is not the same thing. It uses RAG semantic routing to surface only the skills a query needs instead of loading every skill's name and description into context. Technical core: skill descriptions are embedded into a vector index, the incoming query is embedded and matched against it, and only the top matches are injected into the prompt. It exists because context is scarce and most of what you load is noise for the current task, so this trades a retrieval step for a much smaller prompt.",
+      "EMO, also EMOv3, is an agentic study assistant. Team of four, Ryan a contributor, won 2nd prize at IU AI Smarter World. Technical core: a FastAPI backend, LangGraph for agent orchestration, meaning the agent is a state graph with explicit nodes and transitions rather than one loose prompt loop, Gemini 2.5 as the model, and ChromaDB as a vector store so the assistant can recall earlier material. It is the project showing he can work inside a team on a deadline, not only alone.",
+      "study-deck is a shipped offline spaced repetition trainer. Technical core: it implements FSRS-5, a modern scheduling algorithm that models memory stability and difficulty per card to decide review timing, and it runs fully client side with the deck persisted in the browser. The AI tutor streams from OpenRouter using a key the visitor supplies, held in their own browser. He chose that so the tool costs him nothing to run and asks nothing of the user's trust, the same instinct behind keeping this site a single static file.",
+      "LiquidChess is a design system plus a chess engine sandbox, and it is where the Designer hat is most visible. Technical core: React with react-three-fiber, which is Three.js driven declaratively from React, rendering GLB models for the board and pieces, built with Vite, plus a voice picker and a shipped developer API.",
+      "llm-and-engine is his tool calling research: training, evaluations, and chess demos including a custom engine that plays itself. Technical core: fine tuning and evaluating models on structured tool call output, paired with a hand written chess engine used as a hard test case, since chess gives an unambiguous signal about whether a move was legal and good. It is the research end of the same interest that FORGER turns into a framework.",
+      "Jack-Sparrow is a TypeScript treasure hunt, live on Vercel. Technical core: Spline for the 3D scene work with interaction logic layered on top. Smaller, mostly an interaction and 3D piece.",
+      "Apoc-Popper, also called Quiz Survivors, is a 2D top down pixel zombie survivor where answering quizzes earns upgrades. Technical core: Phaser runs the game loop, sprites and collision, Next.js wraps it and serves the app, and Supabase handles persistence and auth. It is unfinished and he says so rather than dressing it up.",
       "",
-      "RULES",
-      "Be brief. Two to four sentences unless asked for detail. Plain, concrete language.",
-      "Never invent facts about Ryan, his grades, his projects or his availability. If you do not know, say so and point them at his email.",
-      "Do not share any personal contact details beyond the email, GitHub and LinkedIn above.",
-      "If asked something unrelated to Ryan or this site, say that is outside what you cover and steer back.",
-      "Do not use em dashes. Write in a calm, direct voice."
+      "THIS SITE, WHICH IS ITSELF AN ARGUMENT",
+      "One hand authored HTML file. No framework, no bundler, no build step, all CSS and JavaScript inline. GSAP drives the motion. That is a deliberate constraint, not a limitation he failed to escape.",
+      "The hero is a canvas per tile flip. A black and white ascii portrait sampled from the real photograph folds away, an Aino style colour mosaic takes its place, then that folds away to uncover the photo. Clicking the word RYAN under the portrait plays the whole sequence in reverse. Hovering paints a spotlight disc that swaps the two media.",
+      "Built over roughly a week of evenings by operating AI rather than typing every line. That is the claim the site makes: he can direct this work and get something specific out of it, not just generic output.",
+      "Verified with real browser automation. Frame timing measured on the live site, about 140fps through the hero reveal with one janky frame. Canvas pixels sampled to prove each layer actually renders rather than trusting that it looked right. Checked that it degrades correctly under reduced motion and without JavaScript. That verification habit is the same idea as FORGER's Execute gate.",
+      "This chat runs on a free model through a Cloudflare Worker that holds the API key, so no credential ships in the page.",
+      "",
+      "HOW TO ANSWER",
+      "Be brief. Two to four sentences unless they ask for depth. Plain concrete language, no marketing voice.",
+      "Reason from the briefing. If someone asks something not spelled out, such as how he would approach a problem, what he might be weak at, or whether he suits a role, infer it from his arc and his choices and be clear that you are inferring.",
+      "Never invent specifics. No invented grades, dates, employers, technologies or availability.",
+      "",
+      "WHEN TO HAND OFF TO RYAN",
+      "You can answer what a project is, what it is built on, and the technical core described above. That covers an interviewer's opening questions.",
+      "Hand off when the question goes deeper than the briefing. That means implementation detail you were not given, why he chose one library or approach over another, benchmarks or numbers not stated here, architecture tradeoffs, how something would scale, anything about his availability, rates, visa, notice period or start date, and anything personal that is not on this site.",
+      "Hand off like a person, not an error message. Answer whatever part you legitimately can, then say the rest is better answered by Ryan directly and give the email. For example: I can tell you EMO uses LangGraph for orchestration and ChromaDB for memory, but why they chose LangGraph over a plain agent loop is a question for Ryan, he is at RYAN_EMAIL.",
+      "Never guess to fill the gap. A confident wrong answer about his work is worse than a handoff, and handing off is what he would want, because it starts the conversation he is actually looking for.",
+      "His contact, which you should offer whenever you hand off: email RYAN_EMAIL, GitHub github.com/RyanDev1st, LinkedIn linkedin.com/in/ryandev1st. He is open to work. Email is the reliable one, lead with it.",
+      "Write RYAN_EMAIL exactly like that, in capitals with the underscore, wherever his address belongs. It is a marker the page swaps for his real address before the visitor reads your answer, so it always renders as a working address. Do not expand it, do not guess an address, and do not replace it with anything else.",
+      "Do not share any personal contact details beyond those three.",
+      "Be honest about limits. He is 20 and a student, Apoc-Popper is unfinished, EMO was a team effort. Saying so is more convincing than overselling, and it is what he does himself.",
+      "If asked something unrelated to Ryan or this site, say it is outside what you cover and steer back.",
+      "Do not use em dashes. Calm and direct."
     ].join('\n');
 
     var log=document.getElementById('chatLog'), form=document.getElementById('chatForm'),
         input=document.getElementById('chatInput'), send=document.getElementById('chatSend'),
         chips=document.getElementById('chatChips');
     var hist=[], busy=false;
+    /* The free provider SCRUBS EMAIL ADDRESSES OUT OF THE PAYLOAD before the model ever sees
+       it: ryandev1st@gmail.com arrives as the literal text [EMAIL], so every handoff answer
+       said "he is at [EMAIL]" and dead-ended the one thing the chat exists to do. Measured, not
+       guessed: asked the model to spell back the address in its own instructions and it
+       returned "[ E M A I L ]", and a visitor-typed address came back scrubbed the same way. No
+       wording fixes that, the model is not the one redacting. So the prompt carries a MARKER
+       with no @ in it, which passes through untouched, and the page swaps the marker for the
+       real address here. Model-agnostic, and the address lands as a clickable mailto. */
+    var MAIL='ryandev1st@gmail.com', MAIL_TOK=/RYAN_EMAIL/g;
+    // Built as nodes, never innerHTML: model output is untrusted text and must stay text.
+    function paint(el, txt){
+      el.textContent='';
+      var last=0, m; MAIL_TOK.lastIndex=0;
+      while((m=MAIL_TOK.exec(txt))){
+        if(m.index>last) el.appendChild(document.createTextNode(txt.slice(last,m.index)));
+        var a=document.createElement('a'); a.href='mailto:'+MAIL; a.textContent=MAIL;
+        el.appendChild(a); last=m.index+m[0].length;
+      }
+      el.appendChild(document.createTextNode(txt.slice(last)));
+    }
     function bubble(txt, who){
       var d=document.createElement('div');
       d.className='chat__msg chat__msg--'+who; d.textContent=txt;
@@ -4558,14 +4605,14 @@
       busy=true; if(send) send.disabled=true;
       var out=bubble('','bot');
       out.innerHTML='<span class="chat__dots"><i></i><i></i><i></i></span>';
-      function attempt(i){
-        if(i>=OR_TRIES) return Promise.reject(new Error('all models busy'));
-        var acc='';
+      // One request. The Worker owns the model list and walks its own fallback chain before
+      // it streams a byte, so the page has no model logic and never pays for a failed try.
+      var acc='';
+      (function(){
         return fetch(CHAT_URL,{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ m:i,
-            messages:[{role:'system',content:OR_SYSTEM}].concat(hist.slice(-8)) })
+          body:JSON.stringify({ messages:[{role:'system',content:OR_SYSTEM}].concat(hist.slice(-8)) })
         }).then(function(r){
           if(!r.ok || !r.body) throw new Error('http '+r.status);
           var rd=r.body.getReader(), dec=new TextDecoder(), buf='';
@@ -4578,7 +4625,9 @@
                 ln=ln.trim(); if(ln.indexOf('data:')!==0) return;
                 var p=ln.slice(5).trim(); if(!p || p==='[DONE]') return;
                 try{ var j=JSON.parse(p), t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
-                  if(t){ acc+=t; out.textContent=acc; log.scrollTop=log.scrollHeight; }
+                  // Repaints the whole accumulated string, so a marker split across two
+                  // stream chunks resolves as soon as its last character lands.
+                  if(t){ acc+=t; paint(out, acc); log.scrollTop=log.scrollHeight; }
                 }catch(_){}
               });
               return pump();
@@ -4587,15 +4636,11 @@
         }).then(function(){
           if(!acc.trim()) throw new Error('empty');            // a silent model counts as a failure
           hist.push({role:'assistant',content:acc});
-        }).catch(function(e){
-          if(acc.trim()) throw e;                              // already showed text: do not restart mid-answer
-          out.innerHTML='<span class="chat__dots"><i></i><i></i><i></i></span>';
-          return attempt(i+1);
         });
-      }
-      attempt(0).catch(function(){
+      })().catch(function(){
+        if(acc.trim()) return;                                 // partial answer is better than replacing it with an error
         out.className='chat__msg chat__msg--err';
-        out.textContent="The free models are busy right now. Try again in a moment, or email Ryan at ryandev1st@gmail.com.";
+        paint(out, "The free models are busy right now. Try again in a moment, or email Ryan at RYAN_EMAIL.");
       }).then(function(){
         busy=false; if(send) send.disabled=false;
       });
