@@ -119,10 +119,10 @@
   .cursor{pointer-events:none;opacity:0;transition:opacity .25s ease}
   html.cur-on .cursor{opacity:1}
   html.cur-on,html.cur-on *{cursor:none!important}
-  /* z-index above EVERYTHING, including the boot gate (2000) and the intro overlay. Anything
-     that outranks it makes the cursor vanish over that surface, which is exactly where the
-     visitor is being asked to click. */
-  .cursor b{position:fixed;top:0;left:0;display:block;border-radius:50%;z-index:99999;
+  /* Above EVERYTHING. The boot gate is 2000 and the intro overlay is 100000, and at 99999 the
+     cursor rendered BEHIND the intro video: the native pointer is hidden by `cur-on`, so that
+     surface had no pointer at all (Ryan). Whatever else gets stacked later, this stays on top. */
+  .cursor b{position:fixed;top:0;left:0;display:block;border-radius:50%;z-index:2147483000;
     transform:translate(-50%,-50%);will-change:transform}
   /* CONTRAST. The first pass was a 6px dot inside a 1px 34%-opacity ring, which on a near
      black page was almost nothing: fine if you are already tracking it, invisible if your
@@ -156,8 +156,12 @@
      It sits immediately OUTSIDE the pale ring (34px outer wall meets the pale ring's 30px) and
      must not overlap it: the pale stroke is itself bright, so darken would resolve against that
      and the edge would read red at all times, which was the original bug. */
-  .cursor__lit{width:34px;height:34px;border-radius:50%;border:2px solid var(--signal);
+  /* Reads as the SAME red as the hover state, not a tint: 3px like a real stroke, plus the
+     hover glow. The glow is inside the blended layer too, so it is equally conditional - it
+     blooms over bright content and resolves to nothing over the page. */
+  .cursor__lit{width:36px;height:36px;border-radius:50%;border:3px solid var(--signal);
     mix-blend-mode:darken;
+    box-shadow:0 0 16px rgba(255,42,18,.95), inset 0 0 9px rgba(255,42,18,.55);
     transition:opacity .2s ease}
   /* hover, press and text already own the ring's colour, so the collision layer steps back and
      the states Ryan liked are untouched */
@@ -1501,6 +1505,39 @@
   .react__thanks{margin:11px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
     color:rgba(236,231,219,.62);white-space:pre}
   .react__thanks .ok{color:var(--signal);margin-right:6px}
+  /* ---- CONFIRMED / ALREADY-SENT state ----
+     Sending had no visible consequence, so it felt like it might not have worked (Ryan). The
+     panel now RESOLVES: same window, same geometry, but it turns green and says what happened.
+     Green is the one place this site leaves its single-accent rule, and it earns it - red is
+     the "look here" colour everywhere else, so reusing it for "done" would say nothing. This
+     is the only green on the page and it appears exactly once. */
+  .react.is-done .ide{border-color:rgba(40,200,64,.4);
+    box-shadow:0 26px 70px rgba(0,0,0,.66), 0 0 0 1px rgba(40,200,64,.16),
+      0 0 52px -14px rgba(40,200,64,.55), inset 0 1px 0 rgba(255,255,255,.07)}
+  .react.is-done .ide::before{background:linear-gradient(90deg, #28c840, rgba(40,200,64,.25) 62%, transparent)}
+  .react.is-done .ide__bar{background:linear-gradient(180deg, rgba(40,200,64,.12), rgba(40,200,64,.03))}
+  .react.is-done .react__thanks .ok{color:#28c840}
+  .react__done{display:none;padding:2px 0 0}
+  .react.is-done .react__done{display:block}
+  .react.is-done .react__row,.react.is-done .react__note,
+  .react.is-done .react__q,.react.is-done .react__sub{display:none}
+  .react__done h3{margin:0;font-family:var(--disp);font-size:17px;font-weight:600;color:var(--fg);
+    letter-spacing:.01em}
+  .react__done p{margin:6px 0 0;font-family:var(--mono);font-size:11px;line-height:1.65;
+    letter-spacing:.03em;color:rgba(236,231,219,.5)}
+  .react__done p b{color:rgba(236,231,219,.8);font-weight:400}
+  /* a check that DRAWS itself, so the confirmation is something that happens rather than a
+     label that was swapped in */
+  .react__mark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    margin:0 0 11px;background:rgba(40,200,64,.14);border:1px solid rgba(40,200,64,.45)}
+  .react__mark svg{width:15px;height:15px;overflow:visible}
+  .react__mark path{fill:none;stroke:#28c840;stroke-width:2.4;stroke-linecap:round;
+    stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22}
+  .react.is-done .react__mark path{animation:reactTick .5s cubic-bezier(.2,.8,.2,1) .1s forwards}
+  @keyframes reactTick{to{stroke-dashoffset:0}}
+  @media (prefers-reduced-motion:reduce){
+    .react.is-done .react__mark path{animation:none;stroke-dashoffset:0}
+  }
 
   @media (max-width:900px){
     .bar nav{display:none}
@@ -2632,18 +2669,29 @@
         <span class="ide__file">signal.log</span>
       </div>
       <div class="react__body">
-        <p class="react__q">Worth your scroll?</p>
-        <p class="react__sub">one tap, straight to Ryan</p>
+        <!-- The ask is a VERDICT, not a rating. Ryan's whole site argues by showing rather than
+             claiming, so the panel asks the one question a visitor is already answering in their
+             head, and says exactly where the answer goes. -->
+        <p class="react__q">You've seen the work.</p>
+        <p class="react__sub">call it. one tap, unfiltered, straight to Ryan.</p>
         <div class="react__row" id="reactRow">
-          <button type="button" class="react__chip" data-react="hire">hire-worthy</button>
+          <button type="button" class="react__chip" data-react="hire">worth a call</button>
           <button type="button" class="react__chip" data-react="solid">solid</button>
           <button type="button" class="react__chip" data-react="meh">not for me</button>
         </div>
         <div class="react__note" id="reactNote">
-          <input type="text" id="reactMsg" maxlength="140" placeholder="add a line (optional)" aria-label="Optional note" />
+          <input type="text" id="reactMsg" maxlength="140" placeholder="a line, if you have one" aria-label="Optional note" />
           <button type="button" class="react__send" id="reactSend">send</button>
         </div>
         <p class="react__thanks" id="reactThanks" hidden><span class="ok">&#10003;</span><span id="reactThanksT"></span></p>
+        <!-- resolved state: same window, green, says exactly what happened -->
+        <div class="react__done" id="reactDone">
+          <span class="react__mark" aria-hidden="true">
+            <svg viewBox="0 0 16 16" focusable="false"><path d="M3 8.6 L6.4 12 L13 4.6"/></svg>
+          </span>
+          <h3 id="reactDoneH">Sent.</h3>
+          <p id="reactDoneP">Ryan reads every one himself. No dashboard, no digest.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -4635,7 +4683,7 @@
         thanks=document.getElementById('reactThanks'), thanksT=document.getElementById('reactThanksT'),
         x=document.getElementById('reactX'), card=box.querySelector('.ide');
     var G=window.gsap;
-    var shown=false, picked=null;
+    var shown=false, picked=null, chipCounted=null;
     /* Two of the three things the rate limiter counts (the third is the IP, which only the
        Worker can see). Neither identifies anybody: the device id is a random value this browser
        generated for itself, and the fingerprint is a digest of coarse, non-unique display and
@@ -4666,24 +4714,65 @@
        a follow-up on the SAME record: the first response hands back an id and the note carries
        it, so one visitor produces one row instead of two and spends one attempt instead of two
        (Ryan saw the duplicate). */
+    /* PROOF OF WORK. The endpoint is public, and an Origin header proves nothing because
+       anything that is not a browser can just send one. So every submission has to carry a
+       nonce whose SHA-256 over the exact payload starts with 16 zero bits. A visitor pays
+       roughly 65k hashes once, which lands well under a second and is invisible behind the
+       animation; a flood pays it per request, which turns a free loop into a metered one.
+       It is friction, not a bot wall. The wall is the per-network caps in the Worker, and
+       Turnstile when Ryan enables it. This is the layer that makes probing those expensive. */
+    var POW_BITS=14;                        // ~16k hashes, measured well under a second
+    function leadingZeroBits(bytes, want){
+      var bits=want, i=0;
+      while(bits>=8){ if(bytes[i++]!==0) return false; bits-=8; }
+      return bits===0 || (bytes[i] >> (8-bits))===0;
+    }
+    function stamp(body){
+      if(!(window.crypto && crypto.subtle && crypto.subtle.digest)) return Promise.resolve(body);
+      body.ts=Math.floor(Date.now()/1000);
+      var canon=[body.r||'',body.note||'',body.host||'',body.dev||'',body.fp||'',body.ts].join('|');
+      var enc=new TextEncoder();
+      var n=0;
+      // Chunked so the search never blocks the frame: a few thousand hashes, yield, repeat.
+      function round(){
+        var chain=Promise.resolve(false);
+        for(var k=0;k<600;k++){
+          (function(nonce){
+            chain=chain.then(function(found){
+              if(found) return found;
+              return crypto.subtle.digest('SHA-256', enc.encode(canon+'|'+nonce))
+                .then(function(buf){
+                  if(leadingZeroBits(new Uint8Array(buf), POW_BITS)){ body.nonce=String(nonce); return true; }
+                  return false;
+                });
+            });
+          })(n++);
+        }
+        return chain.then(function(found){
+          if(found || n>2000000) return body;   // ceiling so a pathological device still returns
+          return new Promise(function(res){ setTimeout(function(){ res(round()); },0); });
+        });
+      }
+      return round();
+    }
     var recId=null;
     function post(reaction, text){
-      try{
-        // keepalive: the tap that sends this is very often the last thing the visitor does on
-        // the page, and without it the browser cancels the request as the tab goes away.
-        var body = recId
-          ? { r:reaction, id:recId, note:text||'' }
-          : { r:reaction, note:text||'',
-              host:(location.host||'local'), ref:(document.referrer||'').slice(0,120),
-              mobile:!!(navigator.userAgent&&/Mobi/.test(navigator.userAgent)),
-              dev:deviceId(), fp:fingerprint() };
-        fetch(REACT_URL, { method:'POST', keepalive:true,
+      // keepalive: the tap that sends this is very often the last thing the visitor does on
+      // the page, and without it the browser cancels the request as the tab goes away.
+      var body = recId
+        ? { r:reaction, id:recId, note:text||'' }
+        : { r:reaction, note:text||'',
+            host:(location.host||'local'), ref:(document.referrer||'').slice(0,120),
+            mobile:!!(navigator.userAgent&&/Mobi/.test(navigator.userAgent)),
+            dev:deviceId(), fp:fingerprint() };
+      return stamp(body).then(function(payload){
+        return fetch(REACT_URL, { method:'POST', keepalive:true,
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(body) })
-          .then(function(r){ return r.json(); })
-          .then(function(j){ if(j && j.id) recId=j.id; })
-          .catch(function(){});
-      }catch(_){}
+          body: JSON.stringify(payload) }).then(function(r){ return r.json(); });
+      }).then(function(j){
+        if(j && j.id) recId=j.id;
+        return j||{};
+      }).catch(function(){ return {}; });
     }
     function markSeen(){ try{ if(SS) SS.setItem('ryan_reactseen','1'); }catch(_){} }
     function hide(){
@@ -4753,14 +4842,44 @@
               onUpdate:function(){ if(thanksT) thanksT.textContent=text.slice(0,Math.round(n.i)); }},'<')
        .to({},{duration:1.0});
     }
+    /* The panel RESOLVES instead of just vanishing. Sending used to look identical whether it
+       landed, was already counted this week, or failed, which is what made it feel unreliable
+       (Ryan). Now it turns green and says which of those happened, and the limit case thanks
+       them rather than scolding: they did give a real reaction, we simply already have it. */
+    function resolve(kind){
+      var h=document.getElementById('reactDoneH'), p=document.getElementById('reactDoneP');
+      if(kind==='limit'){
+        h.textContent='Already counted.';
+        p.innerHTML='You have sent your <b>two for this week</b>. That is the cap, and it is there so the inbox stays readable. Thank you either way.';
+      } else if(kind==='fail'){
+        h.textContent='Could not send.';
+        p.innerHTML='Something between here and Ryan dropped it. His inbox always works: <b>ryandev1st@gmail.com</b>.';
+      } else {
+        h.textContent='Sent.';
+        p.innerHTML='Ryan reads every one himself. No dashboard, no digest.';
+      }
+      if(thanks) thanks.hidden=true;
+      box.classList.add('is-done');
+      if(G && !reduce){
+        var d=document.getElementById('reactDone');
+        G.fromTo(d,{autoAlpha:0,y:8},{autoAlpha:1,y:0,duration:.42,ease:'back.out(1.5)'});
+      }
+      setTimeout(hide, kind==='fail' ? 5200 : 3400);
+    }
     function commit(text){
       if(!picked) return;
-      if(text) post(picked.r, text);        // the chip already went; this carries the note
       if(note && G && !reduce) G.to(note,{height:0,autoAlpha:0,duration:.24,ease:'power2.in'});
       else if(note){ note.style.height='0'; note.style.opacity='0'; }
       if(send) send.disabled=true;
       markSeen();
-      receipt(text ? 'note sent to Ryan' : 'signal sent to Ryan', hide);
+      // the chip already went; this attaches the note to that same record
+      if(text){
+        post(picked.r, text).then(function(j){
+          resolve(j.ok===false ? 'fail' : (chipCounted===false ? 'limit' : 'ok'));
+        });
+      } else {
+        resolve(chipCounted===false ? 'limit' : 'ok');
+      }
     }
     if(row) row.addEventListener('click', function(e){
       var chip=e.target.closest('.react__chip'); if(!chip) return;
@@ -4771,7 +4890,12 @@
       picked={ r:chip.getAttribute('data-react') };
       // Capture the core signal IMMEDIATELY. Most people tap and leave, so the tap must be the
       // thing that is recorded; the note is a bonus that many will never reach.
-      post(picked.r, '');
+      post(picked.r, '').then(function(j){
+        chipCounted = (j && typeof j.counted!=='undefined') ? j.counted : null;
+        // Already at the weekly cap: say so straight away rather than letting them write a
+        // note that was never going to be stored.
+        if(chipCounted===false && !box.classList.contains('is-done')) resolve('limit');
+      });
       markSeen();
       // The picked chip grows into the space the other two vacate, then the note slides in.
       // One motion, so the panel reads as changing state rather than as items disappearing.

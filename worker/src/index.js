@@ -38,6 +38,20 @@ const WEEK = 60 * 60 * 24 * 7;
 const DAY_CAP = 120;
 const KEEP = 60 * 60 * 24 * 365;   // how long a stored reaction lives
 
+/* Switching browser sheds the fingerprint and the device id, which leaves the IP as the only
+   thing still counting - and a phone sheds that by toggling wifi. So the limiter also counts
+   the two things an attacker cannot cheaply change: the /24 the address sits in, and the
+   network (ASN) it belongs to. A residential attacker is stuck inside one of those; a botnet
+   is not, which is what the global caps below are for.
+   The subnet and network allowances are deliberately loose, because they are shared by real
+   unrelated people (an office, a campus, a mobile carrier). They are a ceiling on abuse, not a
+   per-visitor limit. */
+const SUBNET_DAY = 8;
+const ASN_DAY = 40;
+const HOUR_CAP = 30;                 // whole endpoint, any origin
+const POW_BITS = 14;                 // ~16k hashes per submission, sub-second on a real device
+const POW_WINDOW = 300;              // seconds a stamp stays valid
+
 const REACTIONS = ['hire', 'solid', 'meh'];
 
 const cors = (origin) => ({
@@ -72,6 +86,83 @@ async function rateCheck(env, ids) {
   const counts = await Promise.all(keys.map(k => env.REACTIONS.get(k)));
   const over = counts.some(c => (parseInt(c || '0', 10) || 0) >= PER_WEEK);
   return { over, keys, counts: counts.map(c => parseInt(c || '0', 10) || 0) };
+}
+
+// bump a counter with a ceiling; returns true if the ceiling was already reached
+async function bump(env, key, cap, ttl) {
+  const n = parseInt(await env.REACTIONS.get(key) || '0', 10) || 0;
+  if (n >= cap) return true;
+  await env.REACTIONS.put(key, String(n + 1), { expirationTtl: ttl });
+  return false;
+}
+async function peek(env, key, cap) {
+  return (parseInt(await env.REACTIONS.get(key) || '0', 10) || 0) >= cap;
+}
+
+// the /24 an address sits in, or the /48 for v6. Coarse on purpose: it is a shared-network
+// ceiling, not an identifier.
+function block(ip) {
+  if (ip.includes(':')) return ip.split(':').slice(0, 3).join(':') + '::/48';
+  const p = ip.split('.');
+  return p.length === 4 ? p.slice(0, 3).join('.') + '.0/24' : ip;
+}
+
+/* PROOF OF WORK. The endpoint is public and CORS/Origin headers are trivially forged by
+   anything that is not a browser, so "only my site can call this" was never true. This makes
+   each submission cost the caller real CPU: they must find a nonce whose SHA-256 over the
+   exact payload starts with POW_BITS zero bits. A visitor pays it once, invisibly. A flood
+   pays it per request, which is the point - it converts a free loop into a metered one.
+   It is not a bot wall on its own; it is the layer that makes the caps below expensive to
+   probe. Turnstile is the real wall and slots in below when a secret is set. */
+function canon(b) {
+  return [b.r || '', b.note || '', b.host || '', b.dev || '', b.fp || '', b.ts || ''].join('|');
+}
+async function powOk(b) {
+  const ts = parseInt(b.ts, 10);
+  if (!ts || !Number.isFinite(ts)) return false;
+  const age = Math.abs(Date.now() / 1000 - ts);
+  if (age > POW_WINDOW) return false;                       // stale or clock-skewed stamps die
+  if (typeof b.nonce !== 'string' || b.nonce.length > 32) return false;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canon(b) + '|' + b.nonce));
+  const bytes = new Uint8Array(buf);
+  let bits = POW_BITS, i = 0;
+  while (bits >= 8) { if (bytes[i++] !== 0) return false; bits -= 8; }
+  return bits === 0 || (bytes[i] >> (8 - bits)) === 0;
+}
+
+/* Optional Cloudflare Turnstile. Free, and the only thing here that actually distinguishes a
+   human from a determined script. Enable with:
+     npx wrangler secret put TURNSTILE_SECRET
+   and put the site key in the page. Until then the layers above carry the load. */
+async function turnstileOk(env, token, ip) {
+  if (!env.TURNSTILE_SECRET) return true;                   // not configured: not enforced
+  if (!token) return false;
+  try {
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: token, remoteip: ip })
+    });
+    const j = await r.json();
+    return !!j.success;
+  } catch { return false; }
+}
+
+// Comparison that does not leak the answer one character at a time.
+function safeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+
+/* A real browser fetch always sends these. curl and most scripted floods do not, and forging
+   them is possible but is one more thing the attacker has to know. Cheap, so it goes first. */
+function looksLikeBrowser(request) {
+  const site = request.headers.get('Sec-Fetch-Site');
+  const mode = request.headers.get('Sec-Fetch-Mode');
+  if (!site || !mode) return false;
+  return mode === 'cors' && (site === 'cross-site' || site === 'same-origin' || site === 'same-site');
 }
 
 async function sendMail(env, body) {
@@ -138,15 +229,33 @@ async function handleReact(request, env, origin) {
   const fp = clean(b.fp), dev = clean(b.dev);
 
   const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+  const asn = String((request.cf && request.cf.asn) || '0');
   const salt = env.OPENROUTER_KEY || 'salt';
+
+  // Proof of work, then the human check if one is configured. Both are refusals, not quota:
+  // nothing is stored and nothing is counted, so a failed attempt cannot burn a real visitor.
+  if (!await powOk(b)) return json({ ok: false, error: 'stale' }, 400, origin);
+  if (!await turnstileOk(env, b.ts_token, ip)) return json({ ok: false, error: 'unverified' }, 403, origin);
+
+  /* Five counters now. The visitor-level three are what a normal person meets; the subnet and
+     network ones are what someone meets when they start switching browsers and clearing
+     storage, because those two are the parts they cannot cheaply change. */
   const ids = ['ip:' + await tag(ip, salt)];
   if (fp) ids.push('fp:' + await tag(fp, salt));
   if (dev) ids.push('dev:' + await tag(dev, salt));
 
   const day = new Date().toISOString().slice(0, 10);
+  const hour = new Date().toISOString().slice(0, 13);
   const dayKey = 'q:day:' + day;
+  const subKey = 'q:net:' + day + ':' + await tag(block(ip), salt);
+  const asnKey = 'q:asn:' + day + ':' + await tag(asn, salt);
+  const hourKey = 'q:hr:' + hour;
+
   const dayCount = parseInt(await env.REACTIONS.get(dayKey) || '0', 10) || 0;
   if (dayCount >= DAY_CAP) return json({ ok: false, error: 'closed for today' }, 429, origin);
+  if (await peek(env, hourKey, HOUR_CAP)) return json({ ok: false, error: 'busy' }, 429, origin);
+  if (await peek(env, subKey, SUBNET_DAY)) return json({ ok: true, counted: false }, 200, origin);
+  if (await peek(env, asnKey, ASN_DAY)) return json({ ok: true, counted: false }, 200, origin);
 
   const gate = await rateCheck(env, ids);
   // Answers 200 with counted:false rather than an error. The visitor gave a real reaction and
@@ -181,7 +290,10 @@ async function handleReact(request, env, origin) {
   if (delivered) {
     await Promise.all([
       ...gate.keys.map((k, i) => env.REACTIONS.put(k, String(gate.counts[i] + 1), { expirationTtl: WEEK })),
-      env.REACTIONS.put(dayKey, String(dayCount + 1), { expirationTtl: 60 * 60 * 36 })
+      env.REACTIONS.put(dayKey, String(dayCount + 1), { expirationTtl: 60 * 60 * 36 }),
+      bump(env, subKey, SUBNET_DAY, 60 * 60 * 36),
+      bump(env, asnKey, ASN_DAY, 60 * 60 * 36),
+      bump(env, hourKey, HOUR_CAP, 60 * 90)
     ]);
   }
 
@@ -313,7 +425,9 @@ ${n ? `<ul>${cards}</ul>` : `<div class="empty">Nothing yet. Reactions land here
 /* Read the reactions back without opening the Cloudflare dashboard. Guarded by its own secret
    and never CORS-exposed, so it is a thing Ryan opens, not a thing the page can call. */
 async function handleAdmin(request, env, url) {
-  if (!env.ADMIN_KEY || url.searchParams.get('key') !== env.ADMIN_KEY) {
+  // 404 rather than 401, so the endpoint does not confirm it exists, and a constant-time
+  // compare so the key cannot be recovered one character at a time.
+  if (!env.ADMIN_KEY || !safeEqual(url.searchParams.get('key') || '', env.ADMIN_KEY)) {
     return new Response('nope', { status: 404 });
   }
   const list = await env.REACTIONS.list({ prefix: 'r:', limit: 200 });
@@ -329,8 +443,33 @@ async function handleAdmin(request, env, url) {
   });
 }
 
+/* The chat is the expensive endpoint: every call spends model tokens on Ryan's account, so an
+   unmetered public URL here is a bill, not just noise. Two ceilings, both per hour: one for a
+   single address (generous enough that a genuinely curious visitor never notices) and one for
+   the whole endpoint (so a botnet spreading across addresses still cannot run it dry).
+   These are KV counters, which are eventually consistent - a burst can slip a few over the
+   line. That is fine: the job is bounding the bill, not exact accounting. */
+const CHAT_IP_HOUR = 20;
+const CHAT_ALL_HOUR = 250;
+
 async function handleChat(request, env, origin) {
   if (!env.OPENROUTER_KEY) return new Response('Not configured', { status: 500, headers: cors(origin) });
+
+  if (env.REACTIONS) {
+    const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+    const hour = new Date().toISOString().slice(0, 13);
+    const salt = env.OPENROUTER_KEY;
+    const mine = 'c:ip:' + hour + ':' + await tag(ip, salt);
+    const all = 'c:all:' + hour;
+    if (await bump(env, all, CHAT_ALL_HOUR, 60 * 90)) {
+      return new Response('Busy right now, try again shortly', { status: 429, headers: cors(origin) });
+    }
+    if (await bump(env, mine, CHAT_IP_HOUR, 60 * 90)) {
+      return new Response('That is a lot of questions. Try again in a bit, or email Ryan.', {
+        status: 429, headers: cors(origin)
+      });
+    }
+  }
 
   let body;
   try { body = await request.json(); } catch { return new Response('Bad JSON', { status: 400, headers: cors(origin) }); }
@@ -402,6 +541,10 @@ export default {
     }
     if (request.method !== 'POST') return new Response('POST only', { status: 405 });
     if (!ok) return new Response('Origin not allowed', { status: 403 });
+    // An Origin header alone proves nothing (anything can send one). Sec-Fetch-* is set by the
+    // browser itself and cannot be overridden from page JS, so requiring it costs a real
+    // visitor nothing and costs a scripted caller one more thing to get right.
+    if (!looksLikeBrowser(request)) return new Response('Bad request', { status: 400 });
 
     if (url.pathname === '/react') return handleReact(request, env, origin);
     return handleChat(request, env, origin);
