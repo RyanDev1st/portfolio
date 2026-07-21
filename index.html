@@ -2952,7 +2952,13 @@
     sfxPrimed=true;
     for(var base in sfxPool){ sfxPool[base].list.forEach(function(a){
       try{ a.volume=0; var p=a.play();
-        if(p&&p.then) p.then(function(){ try{ a.pause(); a.currentTime=0; }catch(_){} }, function(){});
+        // The pause is DEFERRED to when this silent play resolves, and that resolve waits on
+        // the file buffering. On a cold/slow fetch it lands AFTER a real reveal cue has already
+        // started on the SAME pooled element, and the pause then silences it - reform played,
+        // then went quiet, at random ("coin flip"; measured on the reload path). A real cue
+        // always sets a non-zero volume, so only pause while the element is still 0, i.e. still
+        // untouched by a cue. Otherwise leave the cue playing.
+        if(p&&p.then) p.then(function(){ try{ if(a.volume===0){ a.pause(); a.currentTime=0; } }catch(_){} }, function(){});
       }catch(_){}
     }); }
     // The looping BEDS are unlocked too, but DEFERRED (primeBeds below) - priming them here
