@@ -435,6 +435,7 @@
   .zp--2 .zp__card{top:-10vh;left:-25vw;height:45vh;width:20vw}
   .zp--3 .zp__card{left:27.5vw;height:25vh;width:25vw}
   .zp--4 .zp__card{top:27.5vh;left:5vw;height:25vh;width:20vw}
+  .zp--4 .zp__card img{object-fit:contain;background:#0a0b0d}
   .zp--5 .zp__card{top:27.5vh;left:-22.5vw;height:25vh;width:30vw}
   .zp--6 .zp__card{top:24vh;left:25vw;height:18vh;width:15vw}
   .zp__cap{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;flex-direction:column;
@@ -906,12 +907,11 @@
     background:linear-gradient(90deg,rgba(8,6,3,.5),rgba(8,6,3,0) 32%,rgba(8,6,3,0) 68%,rgba(8,6,3,.5))}
   /* page content */
   .pg{position:absolute;inset:0;padding:clamp(18px,2vw,30px);display:flex;flex-direction:column}
-  .pg--paper{background:#0a0b0d center/200% 100% no-repeat;color:var(--ink)}
-  /* Two halves of one panoramic artwork meet at the binding. */
-  .pg--l{background-position:left center}
-  .pg--r{background-position:right center}
+  .pg--paper{background:#0a0b0d center/cover no-repeat;color:var(--ink)}
+  /* Each face illustrates its own chapter or statement. */
+  .pg--l,.pg--r{background-position:center center}
   .pg--paper::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-    background:linear-gradient(180deg,rgba(8,8,10,.12),rgba(8,8,10,.18) 42%,rgba(8,8,10,.82))}
+    background:linear-gradient(180deg,rgba(8,8,10,.08),rgba(8,8,10,.16) 42%,rgba(8,8,10,.88))}
   .pg--paper > *{position:relative;z-index:1}
   /* left page: chapter marker anchored at the foot */
   .pg--text{justify-content:flex-end}
@@ -2215,12 +2215,12 @@
       <div class="zp__stage">
         <div class="zp__layer zp--0">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-harness.webp" alt="An ivory sphere suspended inside nested titanium frames" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-harness.webp" alt="An agent runtime routing requests through tools, memory and an output" loading="lazy" fetchpriority="low">
           </figure>
         </div>
         <div class="zp__layer zp--1">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-city.webp" alt="A floating city sculpture crossed by a red ribbon river" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-city.webp" alt="An illustrated Ho Chi Minh City skyline along the Saigon River" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// who</span>
               <b class="zp__v">Ryan</b>
@@ -2230,7 +2230,7 @@
         </div>
         <div class="zp__layer zp--2">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-languages.webp" alt="Four glass apertures connected by a red light thread" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-languages.webp" alt="Four language notebooks with Vietnamese, English, German and Chinese greetings" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// languages</span>
               <b class="zp__v">Four.</b>
@@ -2245,7 +2245,7 @@
         </div>
         <div class="zp__layer zp--3">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-study.webp" alt="An impossible ivory staircase winding around a floating black sphere" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-study.webp" alt="A computer-science study desk with an algorithms textbook and a binary tree" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// study</span>
               <b class="zp__v">8.3 / 10</b>
@@ -2255,7 +2255,7 @@
         </div>
         <div class="zp__layer zp--4">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-stack.webp" alt="Floating titanium plates connected by a red cable" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-stack.webp" alt="A developer workbench connecting source code, model training and interface design" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// stack</span>
               <b class="zp__v">Python. C++. TypeScript.</b>
@@ -2265,7 +2265,7 @@
         </div>
         <div class="zp__layer zp--5">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-pivot.webp" alt="A folded titanium ribbon turning through space with a red centerline" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-pivot.webp" alt="A block-built game world transforming into an agent tool workflow" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// the pivot</span>
               <b class="zp__v">Games to agents.</b>
@@ -2275,7 +2275,7 @@
         </div>
         <div class="zp__layer zp--6">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-award.webp" alt="Four basalt columns supporting a levitating ivory ring" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/semantic/about-award.webp" alt="Four collaborators building a maths tutor beside a second-place medal" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// award</span>
               <b class="zp__v">2nd prize</b>
@@ -2397,45 +2397,45 @@
 
             <!-- leaf 0 : front cover / 01 marker -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--cover" data-ld-bg="assets/cinematic/book-cover.webp">
+              <div class="face face--f"><div class="pg pg--cover" data-ld-bg="assets/semantic/book-cover.webp">
                 <div class="k">How I work</div>
                 <h3>I operate AI.</h3>
                 <div class="sub">the tools, the models, the calls</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/cinematic/book-stack.webp">
+              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/semantic/book-stack-left.webp">
                 <div class="lbl">01</div><h3>The stack</h3>
               </div></div>
             </div>
 
             <!-- leaf 1 : 01 punch (stack) / 02 marker -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/cinematic/book-stack.webp">
+              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/semantic/book-stack-right.webp">
                 <div class="punch">Python. C++.<br>TypeScript.</div>
                 <div class="sub">and the model behind every call. the tools are just tools.</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/cinematic/book-orchestrate.webp">
+              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/semantic/book-edge-left.webp">
                 <div class="lbl">02</div><h3>The edge</h3>
               </div></div>
             </div>
 
             <!-- leaf 2 : 02 punch (the edge) / 03 marker -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/cinematic/book-orchestrate.webp">
+              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/semantic/book-edge-right.webp">
                 <div class="punch">I don't just prompt.<br><span class="sig">I operate.</span></div>
                 <div class="sub">the right ask, the right tool, the right model, the right context budget.</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/cinematic/book-proof.webp">
+              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/semantic/book-receipt-left.webp">
                 <div class="lbl">03</div><h3>The receipt</h3>
               </div></div>
             </div>
 
             <!-- leaf 3 : 03 punch (the receipt) / back cover -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/cinematic/book-proof.webp">
+              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/semantic/book-proof-right.webp">
                 <div class="punch">This site is<br>the proof.</div>
                 <div class="sub">designed and shipped by operating AI. days, not weeks.</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--back" data-ld-bg="assets/cinematic/book-cover.webp">
+              <div class="face face--b"><div class="pg pg--back" data-ld-bg="assets/semantic/book-back.webp">
                 <div class="k">How I work</div>
                 <div class="big">Less demo.<br><span class="sig">More proof.</span></div>
                 <div class="live"><b></b>Open to work</div>
