@@ -715,35 +715,6 @@
     .tl__body,#cap-desc,.pmodal__foot p,.intro__note,.foot__note{
       background:none;-webkit-text-fill-color:currentColor;}}
 
-  /* INTRO — a one-time welcome video, shown once per DEVICE, before the hook. */
-  html.intro-lock{overflow:hidden}
-  .introv{position:fixed;inset:0;z-index:100000;background:#000;display:flex;align-items:center;justify-content:center;
-    opacity:1;transition:opacity .6s ease}
-  .introv[hidden]{display:none}
-  .introv.is-out{opacity:0;pointer-events:none}
-  .introv__vid{width:100%;height:100%;object-fit:cover;background:#000}
-  .introv__btn{position:fixed;z-index:3;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:rgba(255,255,255,.72);background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.22);
-    padding:9px 15px;border-radius:40px;cursor:pointer;opacity:0;transition:color .2s,border-color .2s,opacity .4s ease;
-    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-  .introv.is-ready .introv__btn{opacity:1}
-  .introv__btn:hover{color:#fff;border-color:var(--signal)}
-  .introv__skip{right:clamp(16px,4vw,40px);bottom:clamp(20px,5vh,44px)}
-  .introv__sound{right:clamp(16px,4vw,40px);top:clamp(16px,4vh,40px)}
-  .introv__sound .ii-on{display:none}
-  .introv.is-sound .introv__sound .ii-on{display:inline}
-  .introv.is-sound .introv__sound .ii-muted{display:none}
-  .introv__bar{position:fixed;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.1);z-index:3}
-  .introv__bar span{display:block;height:100%;width:0;background:var(--signal)}
-  /* START CARD (first visit). Same material as the reload boot gate so the two read as one
-     family: dark canvas, mono type, single red accent, identical radius + button treatment.
-     This is the rarer, more composed of the two moments (once per device), so it carries the
-     name and the role line; the reload gate stays terse. */
-  .introv__start{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:radial-gradient(120% 90% at 50% 42%, rgba(16,17,21,.92), rgba(7,8,10,.97) 68%, rgba(5,6,7,.99));
-    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-  /* No CSS transition here on purpose: GSAP owns this overlay's entrance and exit, and two
-     systems animating the same opacity is how you get stutter. */
   /* macOS-style IDE window. Reuses the site's existing traffic-light chrome (carousel cards +
      project modal) so this reads as the SAME product, not a new motif. The code block says who
      Ryan is and what the click does, in the medium he actually works in. */
@@ -790,16 +761,6 @@
     font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
     color:rgba(236,231,219,.4);transition:color .2s ease}
   .introv__pass:hover{color:rgba(236,231,219,.75)}
-  @media (prefers-reduced-motion:reduce){ .introv__start{transition:none} .introv__mark::after{animation:none} }
-  .introv.need-tap::after{content:"Tap to play";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#fff;z-index:4}
-  /* Sound is ON by default, but a browser may block unmuted autoplay: say so instead of
-     playing silently. Any click/keypress unmutes and this clears. */
-  .introv.need-sound .introv__sound{opacity:1;border-color:var(--signal);color:#fff;
-    animation:introPulse 1.7s ease-in-out infinite}
-  @keyframes introPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,42,18,.42)}50%{box-shadow:0 0 0 9px rgba(255,42,18,0)}}
-  @media (prefers-reduced-motion:reduce){ .introv.need-sound .introv__sound{animation:none} }
-
   /* HOVER-PEEK — hovering a link previews its source in a glass card. */
   .peek-link{color:var(--fg);font-weight:500;text-decoration:none;white-space:nowrap;
     border-bottom:1px solid rgba(255,42,18,.45);transition:border-color .2s,color .2s}
@@ -1578,159 +1539,11 @@
      cannot express state: the dot is exact and instant, the ring lags and carries the state. -->
 <div class="cursor" id="cursor" aria-hidden="true"><b class="cursor__ring" id="curRing"></b><b class="cursor__lit" id="curLit"></b><b class="cursor__dot" id="curDot"></b></div>
 
-<!-- Intro: a one-time welcome video. Plays ONCE PER DEVICE (localStorage, which
-     survives the browser closing), BEFORE and separate from the per-SESSION hook.
-     New device / new browser / cleared storage -> plays again; same device -> never
-     repeats. A static file:// page has no server, so true per-IP gating is impossible;
-     localStorage is the faithful client-side stand-in. Reduced-motion skips it, and a
-     load stall / error can never trap the visitor (backstop + Skip). -->
-<!-- GSAP loads HERE (not at the end of body) because the intro gate, the boot gate and the
-     hero reveal all animate with it and all run above this point. Both files are already
+<!-- GSAP loads HERE (not at the end of body) because the boot gate and the
+     hero reveal animate with it. Both files are already
      <link rel=preload>ed in <head>, so executing them earlier costs no extra fetch. -->
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/ScrollTrigger.min.js"></script>
-
-<div class="introv" id="introVid" hidden>
-  <video class="introv__vid" id="introVideo" playsinline muted preload="metadata" poster="assets/intro-poster.jpg">
-    <source src="assets/intro.mp4" type="video/mp4">
-  </video>
-  <!-- START CARD: the intro no longer autoplays. A deliberate first click both makes the
-       opening a chosen moment AND unlocks audio, so the intro is heard the way it was made
-       (an unmuted autoplay is blocked by every browser, which is what forced the old silent
-       muted fallback). Same material as the reload boot gate: one family, two moments. -->
-  <div class="introv__start" id="introStart">
-    <div class="ide" role="group" aria-label="Start the intro">
-      <div class="ide__bar">
-        <span class="lamps" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="ide__file">ryan.portfolio</span>
-      </div>
-      <div class="ide__code" aria-hidden="true">
-        <p class="ide__ln" style="--i:0"><span class="k">const</span> ryan = {</p>
-        <p class="ide__ln" style="--i:1">  hats: [<span class="s">'AI Engineer'</span>, <span class="s">'Designer'</span>, <span class="s">'Systems Architect'</span>],</p>
-        <p class="ide__ln" style="--i:2">  habit: <span class="s">'make it real'</span>,</p>
-        <p class="ide__ln" style="--i:3">};</p>
-        <p class="ide__ln ide__ln--run" style="--i:4">ryan.<span class="f">introduce</span>()<span class="ide__cur"></span></p>
-      </div>
-      <!-- Screen-reader equivalent of the code block above. -->
-      <p class="sr-only">Ryan. AI Engineer, Designer, Systems Architect. One habit: make it real. Press Run to play a 10 second intro with sound.</p>
-      <div class="ide__foot">
-        <button type="button" class="ide__run" id="introGo"><span aria-hidden="true">&#9654;</span> Run intro</button>
-        <span class="ide__meta">10s, sound on</span>
-      </div>
-    </div>
-    <button type="button" class="introv__pass" id="introPass">skip intro</button>
-  </div>
-  <button type="button" class="introv__btn introv__sound" id="introSound" aria-label="Toggle sound"><span class="ii-muted">Sound on</span><span class="ii-on">Sound off</span></button>
-  <button type="button" class="introv__btn introv__skip" id="introSkip">Skip <span aria-hidden="true">&#8594;</span></button>
-  <div class="introv__bar" aria-hidden="true"><span id="introProg"></span></div>
-</div>
-<script>
-(function(){
-  var ov=document.getElementById('introVid'); if(!ov) return;
-  var LS=(function(){ try{ return window.localStorage; }catch(_){ return null; } })();
-  var KEY='ryan_intro_v1';
-  var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  if((LS&&LS.getItem(KEY)==='1')||reduce){ if(ov.parentNode) ov.parentNode.removeChild(ov); return; }
-  var vid=document.getElementById('introVideo'),
-      skip=document.getElementById('introSkip'),
-      snd=document.getElementById('introSound'),
-      prog=document.getElementById('introProg');
-  var done=false, root=document.documentElement;
-  function seen(){ try{ if(LS) LS.setItem(KEY,'1'); }catch(_){} }
-  function finish(){ if(done) return; done=true; seen();
-    try{ vid.pause(); }catch(_){}
-    ov.classList.add('is-out'); root.classList.remove('intro-lock');
-    setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); }, 640);
-  }
-  ov.hidden=false; root.classList.add('intro-lock');
-  // START CARD instead of autoplay (Ryan). An unmuted autoplay is blocked by every browser,
-  // so the old path silently degraded to a MUTED intro - a poor first impression of a clip
-  // that was made to be heard. One deliberate click makes the opening a chosen moment AND
-  // counts as the activation gesture, so the intro plays unmuted, from the top, first time.
-  var startCard=document.getElementById('introStart'),
-      ide=startCard&&startCard.querySelector('.ide'),
-      lines=startCard?startCard.querySelectorAll('.ide__ln'):[],
-      cur=startCard&&startCard.querySelector('.ide__cur'),
-      go=document.getElementById('introGo'),
-      meta=startCard&&startCard.querySelector('.ide__meta'),
-      pass=document.getElementById('introPass');
-  var G=window.gsap, starting=false;
-  vid.volume=1; vid.muted=false; ov.classList.add('is-sound');
-  function goMuted(){ vid.muted=true; ov.classList.remove('is-sound'); ov.classList.add('need-sound');
-    var q=vid.play(); if(q&&q.catch) q.catch(function(){ ov.classList.add('need-tap'); }); }
-
-  // ---- ENTRANCE (GSAP) --------------------------------------------------------
-  // The window arrives, the file writes itself line by line, then the action appears.
-  // Sequenced so the eye lands on the code first and the button last: by the time you
-  // can act, you already know what you are acting on.
-  if(G && ide && !reduce){
-    G.set(startCard,{autoAlpha:1});
-    var tin=G.timeline({defaults:{ease:'power3.out'}});
-    tin.from(ide,{y:20,scale:.965,autoAlpha:0,duration:.55})
-       .from(lines,{y:7,autoAlpha:0,duration:.32,stagger:.075},'-=.24')
-       .from([go,meta],{y:6,autoAlpha:0,duration:.34,stagger:.05},'-=.10')
-       .from(pass,{autoAlpha:0,duration:.3},'-=.20');
-    if(cur) G.to(cur,{autoAlpha:0,duration:.5,ease:'steps(1)',repeat:-1,yoyo:true,delay:.9});
-  }
-
-  // ---- START (GSAP) -----------------------------------------------------------
-  // Click feedback is immediate, the video is told to play at once, and the window
-  // clears out UNDER that - so there is never a dead frame between intent and result.
-  function begin(){
-    if(starting || ov.classList.contains('is-started')) return;
-    starting=true; ov.classList.add('is-started');
-    try{ vid.currentTime=0; }catch(_){}
-    vid.muted=false; ov.classList.add('is-sound');
-    var p=vid.play(); if(p&&p.catch) p.catch(goMuted);   // fires on THIS gesture, so audio is unlocked
-    if(cur && G) G.killTweensOf(cur);
-    if(!G || reduce){ if(startCard) startCard.style.display='none'; return; }
-    // If the clip needs buffering, say so on the button instead of freezing on a dead card.
-    if(vid.readyState < 3 && go){ go.setAttribute('disabled',''); go.textContent='buffering'; }
-    var tout=G.timeline({defaults:{ease:'power2.inOut'},
-      onComplete:function(){ if(startCard) startCard.style.display='none'; }});
-    tout.to(go,{scale:.97,duration:.09,ease:'power2.in'})
-        .to(ide,{y:-10,scale:.985,autoAlpha:0,duration:.44},'-=.02')
-        .to(pass,{autoAlpha:0,duration:.24},'<')
-        .to(startCard,{autoAlpha:0,duration:.34},'-=.28');
-  }
-  if(go) go.addEventListener('click', function(e){ e.stopPropagation(); begin(); });
-  if(pass) pass.addEventListener('click', function(e){ e.stopPropagation(); finish(); });
-  if(startCard) startCard.addEventListener('click', begin);   // the whole card is the target
-  // Keyboard: any key starts (Enter/Space are the obvious ones), Esc skips.
-  document.addEventListener('keydown', function(e){
-    if(done) return;
-    if(!ov.classList.contains('is-started')){
-      if(e.key==='Escape'){ e.preventDefault(); finish(); return; }
-      if(e.key==='Tab') return;                               // let focus move normally
-      e.preventDefault(); begin();
-    } else if(e.key==='Escape'){ finish(); }
-  }, true);
-  try{ if(go) go.focus({preventScroll:true}); }catch(_){ try{ go.focus(); }catch(__){} }
-  function unmute(){
-    if(!vid.muted) return;
-    vid.muted=false; ov.classList.remove('need-sound','need-tap'); ov.classList.add('is-sound');
-    // Heard nothing yet (blocked unmuted autoplay -> muted fallback)? Restart from the top so
-    // the audio plays from the BEGINNING on the tap, instead of jumping in mid-clip. A late
-    // tap (already watched most of it) just unmutes in place.
-    try{ if(vid.currentTime < 2.6) vid.currentTime = 0; }catch(_){}
-    var q=vid.play(); if(q&&q.catch) q.catch(function(){});
-  }
-  ['pointerdown','keydown','touchstart'].forEach(function(t){ addEventListener(t, unmute, { once:true, capture:true, passive:true }); });
-  ov.addEventListener('click',function(){ if(ov.classList.contains('need-tap')){ ov.classList.remove('need-tap'); vid.play(); } unmute(); });
-  skip.addEventListener('click',function(e){ e.stopPropagation(); finish(); });
-  snd.addEventListener('click',function(e){ e.stopPropagation(); vid.muted=!vid.muted; ov.classList.toggle('is-sound',!vid.muted);
-    if(!vid.muted){ var q=vid.play(); if(q&&q.catch) q.catch(function(){}); } });
-  vid.addEventListener('ended', finish);
-  vid.addEventListener('error', finish);
-  vid.addEventListener('timeupdate',function(){ if(vid.duration) prog.style.width=(vid.currentTime/vid.duration*100).toFixed(2)+'%'; });
-  setTimeout(function(){ ov.classList.add('is-ready'); }, 900);           // fade the controls in after a beat
-  // Stall backstop: only once the visitor has actually STARTED it (before that the card is
-  // meant to wait indefinitely for the click, so an un-started intro must never self-dismiss).
-  vid.addEventListener('play', function(){
-    setTimeout(function(){ if(!done && vid.readyState<2) finish(); }, 7000);
-  }, { once:true });
-})();
-</script>
 
 <section class="hook" id="hook" data-stage="intro" role="button" tabindex="0" aria-label="Click or scroll once to form Ryan, then again to enter the portfolio.">
   <pre id="hook-ascii" aria-hidden="true"></pre>
@@ -2236,9 +2049,9 @@
               <b class="zp__v">Four.</b>
               <ul class="zp__list">
                 <li><b>Vietnamese</b> native</li>
-                <li><b>English</b> IELTS 7.0</li>
+                <li><b>English</b> IELTS 7.5</li>
                 <li><b>German</b> A2.2</li>
-                <li><b>Chinese</b> HSK 1</li>
+                <li><b>Chinese</b> HSK 3</li>
               </ul>
             </figcaption>
           </figure>
@@ -5252,7 +5065,7 @@
       "",
       "WHO HE IS",
       "Ryan is Nguyen Minh Khang, 20, in Ho Chi Minh City. BSc Computer Science at Vietnamese-German University, started Winter 2024, foundation year GPA 8.3/10, ranked very good. His strongest marks were Exploring of CS 10.0, Information Technology 9.3, Leadership Skill 9.2, Multi-disciplinary Project 9.0. That shape matters more than the number: he scores highest where the work is open ended or involves leading people, not where it is rote.",
-      "Vietnamese native, English at IELTS 7.0, German A2.2, Chinese HSK 1.",
+      "Vietnamese native, English at IELTS 7.5, German A2.2, Chinese HSK 3.",
       "He works in Python, C++, TypeScript and JavaScript, and started in LuaU. Tools: PyTorch, Hugging Face, Claude, Gemini, Figma.",
       "",
       "HOW HE THINKS, WHICH IS THE POINT",
