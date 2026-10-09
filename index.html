@@ -826,27 +826,33 @@
   .book-sec__head h2{margin-top:12px;font-size:clamp(26px,2.8vw,40px);font-weight:700;line-height:1.02;letter-spacing:-.04em;max-width:24ch}
   /* stage + book — a real object: dark hardcover, cream paper, page-edge
      thickness, spine gutter, a drop shadow, and ONE red ribbon bookmark. */
-  .bookstage{flex:1;min-height:0;perspective:3400px;perspective-origin:50% 44%;display:flex;justify-content:center;align-items:center;padding:24px 0 12px}
-  .book{position:relative;transform-style:preserve-3d;transform:rotateX(2.5deg);
+  .bookstage{flex:1;min-height:0;perspective:4200px;perspective-origin:50% 20%;display:flex;justify-content:center;align-items:center;padding:24px 0 24px}
+  .book{position:relative;transform-style:preserve-3d;transform:rotateX(5deg) rotateZ(-1deg);
     --spread:min(88vw,1360px,calc((100svh - 240px)*2.5));
     --ph:calc(var(--spread)/2.5); --pw:calc(var(--spread)/2);
     --paper:#111214; --paper2:#0d0e10; --ink:#ece7db; --ink-soft:#948f84; --edge:#33343a;
     --cover1:#191a1e; --cover2:#0d0d10; --foil:#d8d2c2;
     width:calc(var(--pw)*2);height:var(--ph)}
-  /* dark cover underneath both page stacks, with a stacked page-block fore-edge */
-  .book__base{position:absolute;top:0;height:var(--ph);width:var(--pw);overflow:visible}
-  .book__base--l{left:0;border-radius:6px 0 0 6px;display:grid;place-items:center;
+  /* Hardcover boards overhang the paper; the fine pale lines are the page block. */
+  .book__base{position:absolute;top:-4px;height:calc(var(--ph) + 8px);width:calc(var(--pw) + 4px);
+    transform:translateZ(-5px);transform-style:preserve-3d;overflow:visible}
+  .book__base::before{content:"";position:absolute;top:5px;bottom:4px;left:3px;right:3px;border-radius:2px;
+    background:#a49f94;transform:translateZ(2px);
+    box-shadow:0 1px 0 #d4cebf,0 2px 0 #79766e,0 3px 0 #c2bcad,0 4px 0 #77736b,0 5px 0 #c2bcad,0 6px 0 #57554f}
+  .book__base::after{content:"";position:absolute;top:0;bottom:0;width:7px;transform:translateZ(3px);
+    background:linear-gradient(90deg,#08090a,#373638 45%,#111214);border-radius:2px}
+  .book__base--l::after{right:0}
+  .book__base--r::after{left:0}
+  .book__base--l{left:-4px;border-radius:6px 0 0 6px;display:grid;place-items:center;
     background:linear-gradient(150deg,var(--cover1),var(--cover2));
     box-shadow:inset -18px 0 28px rgba(0,0,0,.55),
-      -2px 0 0 rgba(216,211,197,.5),-4px 0 0 #2a2b31,-7px 0 0 #202127,-10px 0 0 #2a2b31,-13px 0 0 #1b1c21,
-      -20px 30px 50px rgba(0,0,0,.58)}
+      0 2px 0 #303035,0 5px 0 #111215,-10px 22px 28px rgba(0,0,0,.48),-12px 42px 60px rgba(0,0,0,.5)}
   .book__base--l .spine{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--disp);font-weight:700;
     font-size:clamp(19px,2.5vw,30px);letter-spacing:.06em;color:rgba(208,201,182,.15)}
   .book__base--r{left:var(--pw);border-radius:0 6px 6px 0;
     background:linear-gradient(150deg,var(--cover2),var(--cover1));
     box-shadow:inset 18px 0 28px rgba(0,0,0,.55),
-      2px 0 0 rgba(216,211,197,.5),4px 0 0 #2a2b31,7px 0 0 #202127,10px 0 0 #2a2b31,13px 0 0 #1b1c21,
-      20px 30px 50px rgba(0,0,0,.58)}
+      0 2px 0 #303035,0 5px 0 #111215,10px 22px 28px rgba(0,0,0,.48),12px 42px 60px rgba(0,0,0,.5)}
   .book:not(.is-3d) .book__base--l .spine{writing-mode:horizontal-tb;transform:none}
   /* red ribbon bookmark hanging from the spine — the single accent */
   .book__ribbon{position:absolute;top:-3px;left:calc(var(--pw) - 6px);width:12px;height:clamp(42px,8vh,68px);
@@ -856,12 +862,25 @@
   .leaf{position:absolute;top:0;left:var(--pw);width:var(--pw);height:var(--ph);
     transform-origin:left center;transform-style:preserve-3d;will-change:transform}
   .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
-  .face--f{border-radius:0 7px 7px 0}
-  .face--b{transform:rotateY(180deg);border-radius:7px 0 0 7px}
+  .face--f{transform:translateZ(.15px);border-radius:0 2px 2px 0}
+  .face--b{transform:rotateY(180deg) translateZ(.15px);border-radius:2px 0 0 2px}
+  .face--f:has(.pg--cover),.face--b:has(.pg--back){border-radius:5px;box-shadow:inset 0 0 0 2px #252528}
   /* spine gutter shadow on the inner (binding) edge of each page */
-  .face::after{content:"";position:absolute;top:0;bottom:0;width:17%;pointer-events:none;z-index:6}
-  .face--f::after{left:0;background:linear-gradient(to right, rgba(38,28,12,.34), transparent 72%)}
-  .face--b::after{right:0;background:linear-gradient(to left, rgba(38,28,12,.34), transparent 72%)}
+  .face::after{content:"";position:absolute;top:0;bottom:0;width:11%;pointer-events:none;z-index:6}
+  .face--f::after{left:0;background:linear-gradient(to right,rgba(0,0,0,.8),rgba(0,0,0,.32) 24%,rgba(255,255,255,.04) 48%,transparent)}
+  .face--b::after{right:0;background:linear-gradient(to left,rgba(0,0,0,.8),rgba(0,0,0,.32) 24%,rgba(255,255,255,.04) 48%,transparent)}
+  /* Only the two paper leaves bend. Both covers retain their rigid faces. */
+  .leaf__strip{position:absolute;top:0;left:0;width:calc(var(--pw)/14 + .8px);height:100%;
+    transform-origin:left center;transform-style:preserve-3d}
+  .leaf__surface{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+  .leaf__surface--f{transform:translateZ(.15px)}
+  .leaf__surface--b{transform:rotateY(180deg) translateZ(.15px)}
+  .leaf__surface .face{width:var(--pw);left:calc(var(--slice)*var(--pw)/-14);transform:none;border-radius:0}
+  .leaf__surface::after{content:"";position:absolute;inset:0;pointer-events:none;background:#000;opacity:var(--shade,0)}
+  .leaf__strip{visibility:hidden}
+  .book.is-3d .leaf.is-turning > .leaf__strip{visibility:visible}
+  .book.is-3d .leaf.is-turning > .face{opacity:0}
+  .book.is-3d .leaf.is-turning > .sh{visibility:hidden}
   /* page-turn shade: darkens the turning page mid-flip. Symmetric so it is mirror-safe. */
   .leaf .sh{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;border-radius:7px;
     backface-visibility:hidden;-webkit-backface-visibility:hidden;
@@ -897,7 +916,7 @@
   .pg--back .live b{width:7px;height:7px;border-radius:50%;background:var(--signal)}
   /* fallback: no 3D (reduced motion / no GSAP / small screen) -> readable stack */
   .book:not(.is-3d){width:100%;height:auto;transform:none!important;--pw:100%}
-  .book:not(.is-3d) .book__base,.book:not(.is-3d) .book__ribbon,.book:not(.is-3d) .leaf .sh{display:none}
+  .book:not(.is-3d) .book__base,.book:not(.is-3d) .book__ribbon,.book:not(.is-3d) .leaf .sh,.book:not(.is-3d) .leaf__strip{display:none}
   .book:not(.is-3d) .leaf{position:static;width:100%;height:auto;transform:none!important;margin:0 0 12px;z-index:auto!important}
   .book:not(.is-3d) .face{position:relative;inset:auto;backface-visibility:visible;-webkit-backface-visibility:visible;
     transform:none!important;height:clamp(280px,52vw,420px);border-radius:10px;margin-bottom:12px}
@@ -5591,55 +5610,86 @@
   if(hasST){ (function(){
     var sec=document.getElementById('capabilities'), book=document.getElementById('book');
     if(!sec||!book) return;
-    gsap.matchMedia().add('(min-width:761px)', function(){
+    gsap.matchMedia().add('(min-width:761px) and (prefers-reduced-motion:no-preference)', function(){
     var leaves=book.querySelectorAll('.leaf'), N=leaves.length; if(!N) return;
     var shades=[]; for(var s=0;s<N;s++){ shades[s]=leaves[s].querySelector('.sh'); }
+    var strips=[], slices=14;
+    // Cut the same artwork into adjoining surfaces, so the paper bends without
+    // stretching its type. Originals keep the text accessible and own lazy loading.
+    for(var i=1;i<N-1;i++){
+      strips[i]=[];
+      var faces=leaves[i].querySelectorAll('.face');
+      for(var j=0;j<slices;j++){
+        var strip=document.createElement('div'); strip.className='leaf__strip'; strip.setAttribute('aria-hidden','true');
+        var art=[];
+        for(var side=0;side<2;side++){
+          var surface=document.createElement('div'); surface.className='leaf__surface leaf__surface--'+(side?'b':'f');
+          surface.style.setProperty('--slice',side?slices-1-j:j);
+          var copy=faces[side].cloneNode(true), pg=copy.querySelector('.pg');
+          pg.removeAttribute('data-ld-bg'); art.push({copy:pg,source:faces[side].querySelector('.pg')});
+          surface.appendChild(copy); strip.appendChild(surface);
+        }
+        leaves[i].appendChild(strip); strips[i].push({node:strip,art:art});
+      }
+    }
     var baseL=book.querySelector('.book__base--l'), baseR=book.querySelector('.book__base--r'), ribbon=book.querySelector('.book__ribbon');
     book.classList.add('is-3d');
     sec.classList.add('is-book');
     var pw=book.offsetWidth/2;                            // half-page width (book is 2 pages wide)
     function cl(v){ return v<0?0:v>1?1:v; }
     function ramp(t,a,b){ return cl((t-a)/(b-a)); }       // remap t from [a,b] to [0,1]
-    // The book is an EXPERIENCE: starts CLOSED on the front cover, opens as the first
-    // leaf turns, flips through the spreads, then CLOSES again on the back cover.
-    // PHANTOM-PAGE FIX: the empty inner board (baseL/baseR) must NOT be exposed beside a
-    // barely-open cover. So the book stays centred on the single cover until the cover has
-    // rotated PAST edge-on (openT>.5), then the spine slides to centre and the board fades
-    // in behind the cover's landing back-face. Symmetric on close.
+    function turn(p,i){ var t=ramp(p*N-i,.18,.82); return t*t*(3-2*t); }
+    var lastFlip=0;
+    // Hold each spread at rest. Covers are rigid; inner leaves bow toward the viewer
+    // during a turn, then settle flat into the binding, in either scroll direction.
     function layout(p){
-      var openT=cl(p*N), closeT=cl(p*N-(N-1));
-      var openS=ramp(openT,0.5,1), closeS=ramp(closeT,0.5,1);      // shift only after the cover passes edge-on
+      var openT=turn(p,0), closeT=turn(p,N-1);
+      var openS=ramp(openT,0.5,1), closeS=ramp(closeT,0.5,1);
       var shift=-(pw/2)*(1-openS) + (pw/2)*closeS;                  // cover centred -> spread centred -> back centred
-      book.style.transform='rotateX(2.5deg) translateX('+shift.toFixed(2)+'px)';
-      // The boards are ALWAYS covered by flat leaf content, so they may only appear once
-      // their leaf is flat. Showing them mid-flip = the empty phantom page. Hide hard.
-      if(baseL) baseL.style.opacity=(openT>=0.985?1:0);   // left board only once the cover is flat (already covered)
-      if(baseR) baseR.style.opacity=(closeT<=0.015?1:0);  // right board vanishes the instant the back cover starts closing
+      book.style.transform='translateX('+shift.toFixed(2)+'px) rotateX(5deg) rotateZ(-1deg)';
+      if(baseL) baseL.style.opacity=ramp(openT,.8,1).toFixed(3);
+      if(baseR) baseR.style.opacity=(1-ramp(closeT,0,.2)).toFixed(3);
       if(ribbon) ribbon.style.opacity=Math.min(ramp(openT,0.55,0.9), 1-ramp(closeT,0.5,0.85)).toFixed(3);
+      var completed=0;
       for(var i=0;i<N;i++){
-        var t=cl(p*N-i), flipping=t>0&&t<1;
+        var t=turn(p,i), flipping=t>0&&t<1;
         var z=(t>=1?i:(N-i))*0.6;                         // page thickness, avoids z-fighting
         leaves[i].style.transform='translateZ('+z+'px) rotateY('+(-180*t)+'deg)';
         leaves[i].style.zIndex=flipping?100:(t>=1?i:(N-i));
         if(shades[i]) shades[i].style.opacity=flipping?(Math.sin(t*Math.PI)*0.5).toFixed(3):'0';
+        leaves[i].classList.toggle('is-turning',flipping&&!!strips[i]);
+        if(t===1) completed++;
+        if(strips[i]&&flipping){
+          var bend=Math.sin(t*Math.PI)*1.05, x=0, depth=0, step=pw/slices;
+          for(var j=0;j<slices;j++){
+            var a=bend*(j/(slices-1)-.5), piece=strips[i][j];
+            piece.node.style.transform='translate3d('+x.toFixed(3)+'px,0,'+depth.toFixed(3)+'px) rotateY('+(a*180/Math.PI).toFixed(3)+'deg)';
+            piece.node.style.setProperty('--shade',(Math.abs(Math.sin(a))*0.22+Math.sin(t*Math.PI)*0.09).toFixed(3));
+            for(var side=0;side<2;side++) piece.art[side].copy.style.backgroundImage=piece.art[side].source.style.backgroundImage;
+            x+=Math.cos(a)*step; depth-=Math.sin(a)*step;
+          }
+        }
       }
+      if(completed!==lastFlip){ lastFlip=completed; try{ sfx('flip'); }catch(_){} }
     }
     layout(0);
-    var lastFlip=0;
-    ScrollTrigger.create({ trigger:sec, start:'top top', end:'+='+(N*74)+'%',
-      pin:true, scrub:0.8, anticipatePin:1,
-      onUpdate:function(self){ var p=self.progress; layout(p);
-        var fi=Math.floor(p*N + 1e-6);                 // completed page turns
-        if(fi!==lastFlip){ lastFlip=fi; try{ sfx('flip'); }catch(_){} }   // a page just turned
-      },
-      onRefresh:function(self){ pw=book.offsetWidth/2; layout(self?self.progress:0); } });
+    var state={progress:0};
+    gsap.to(state,{progress:1,ease:'none',onUpdate:function(){ layout(state.progress); },
+      scrollTrigger:{trigger:sec,start:'top top',end:'+='+(N*90)+'%',
+        pin:true,scrub:0.65,anticipatePin:1,
+        onRefresh:function(self){ pw=book.offsetWidth/2; layout(self.progress); } }});
     return function(){
       book.classList.remove('is-3d');
       sec.classList.remove('is-book');
       book.style.transform='';
+      if(baseL) baseL.style.opacity='';
+      if(baseR) baseR.style.opacity='';
+      if(ribbon) ribbon.style.opacity='';
       for(var i=0;i<N;i++){
+        leaves[i].classList.remove('is-turning');
         leaves[i].style.transform=''; leaves[i].style.zIndex='';
         if(shades[i]) shades[i].style.opacity='';
+        if(strips[i]) for(var j=0;j<slices;j++) strips[i][j].node.remove();
       }
     };
     });
