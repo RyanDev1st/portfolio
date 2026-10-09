@@ -428,22 +428,24 @@
   .zp__card{position:relative;margin:0;height:25vh;width:25vw;overflow:hidden;
     box-shadow:0 30px 70px rgba(0,0,0,.6);outline:1px solid rgba(255,255,255,.06);outline-offset:-1px}
   .zp__card img{display:block;height:100%;width:100%;object-fit:cover}
+  .zp__card::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,transparent 35%,rgba(8,9,10,.88))}
   /* per-index geometry (reference values) */
   .zp--1 .zp__card{top:-30vh;left:5vw;height:30vh;width:35vw}
   .zp--2 .zp__card{top:-10vh;left:-25vw;height:45vh;width:20vw}
   .zp--3 .zp__card{left:27.5vw;height:25vh;width:25vw}
   .zp--4 .zp__card{top:27.5vh;left:5vw;height:25vh;width:20vw}
   .zp--5 .zp__card{top:27.5vh;left:-22.5vw;height:25vh;width:30vw}
-  .zp--6 .zp__card{top:22.5vh;left:25vw;height:15vh;width:15vw}
+  .zp--6 .zp__card{top:24vh;left:25vw;height:18vh;width:15vw}
   .zp__cap{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;flex-direction:column;
     gap:5px;padding:clamp(9px,.95vw,17px)}
-  .zp__k{font-family:var(--mono);font-size:clamp(7px,.62vw,9px);letter-spacing:.2em;text-transform:uppercase;
+  .zp__k{font-family:var(--mono);font-size:clamp(9px,.72vw,10px);letter-spacing:.2em;text-transform:uppercase;
     color:var(--signal)}
   .zp__v{font-family:var(--disp);font-weight:600;letter-spacing:-.015em;line-height:1.12;color:#fff;
-    font-size:clamp(13px,1.42vw,21px)}
-  .zp__s{font-family:var(--mono);font-size:clamp(7.5px,.66vw,10px);line-height:1.5;color:rgba(255,255,255,.7)}
+    font-size:clamp(16px,1.5vw,24px)}
+  .zp__s{font-family:var(--mono);font-size:clamp(10px,.78vw,12px);line-height:1.5;color:rgba(255,255,255,.78)}
   .zp__list{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;
-    font-family:var(--mono);font-size:clamp(7.5px,.66vw,10px);color:rgba(255,255,255,.62)}
+    font-family:var(--mono);font-size:clamp(10px,.78vw,12px);color:rgba(255,255,255,.72)}
   .zp__list b{color:#fff;font-weight:500}
   /* the payoff resolves on the centre card once it fills the frame (JS drives opacity) */
   .zp__payoff{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
@@ -853,15 +855,19 @@
   /* HOW I WORK — a 3D page-flip book. Each scroll flip opens one competency
      spread: text page (left) + a big visual page (right). Rebuilt native from
      the InteractiveBook mechanic: leaves hinged at the spine, rotateY 0..-180. */
-  .book-sec{min-height:100vh;display:flex;flex-direction:column;
-    padding:clamp(92px,13vh,124px) 0 clamp(24px,4vh,50px);border-bottom:1px solid var(--border);overflow:hidden}
+  .book-sec{display:flex;flex-direction:column;
+    padding:92px 0 32px;border-bottom:1px solid var(--border);overflow:hidden}
+  .book-sec.is-book{height:100svh;min-height:0}
+  .book-sec > .wrap{width:100%;max-width:1480px}
+  .book-sec.is-book > .wrap{height:100%;display:flex;flex-direction:column}
   .book-sec__head{flex:none;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
-  .book-sec__head h2{margin-top:12px;font-size:clamp(26px,3.8vw,50px);font-weight:700;line-height:.94;letter-spacing:-.04em;max-width:16ch}
+  .book-sec__head h2{margin-top:12px;font-size:clamp(26px,2.8vw,40px);font-weight:700;line-height:1.02;letter-spacing:-.04em;max-width:24ch}
   /* stage + book — a real object: dark hardcover, cream paper, page-edge
      thickness, spine gutter, a drop shadow, and ONE red ribbon bookmark. */
-  .bookstage{flex:1;perspective:2600px;perspective-origin:50% 44%;display:flex;justify-content:center;align-items:center;padding-top:clamp(18px,4vh,42px)}
+  .bookstage{flex:1;min-height:0;perspective:3400px;perspective-origin:50% 44%;display:flex;justify-content:center;align-items:center;padding:24px 0 12px}
   .book{position:relative;transform-style:preserve-3d;transform:rotateX(2.5deg);
-    --ph:clamp(360px,64vh,600px); --pw:calc(var(--ph)*0.7);
+    --spread:min(88vw,1360px,calc((100svh - 240px)*2.5));
+    --ph:calc(var(--spread)/2.5); --pw:calc(var(--spread)/2);
     --paper:#111214; --paper2:#0d0e10; --ink:#ece7db; --ink-soft:#948f84; --edge:#33343a;
     --cover1:#191a1e; --cover2:#0d0d10; --foil:#d8d2c2;
     width:calc(var(--pw)*2);height:var(--ph)}
@@ -881,7 +887,7 @@
       20px 30px 50px rgba(0,0,0,.58)}
   .book:not(.is-3d) .book__base--l .spine{writing-mode:horizontal-tb;transform:none}
   /* red ribbon bookmark hanging from the spine — the single accent */
-  .book__ribbon{position:absolute;top:-3px;left:calc(var(--pw) - 8px);width:16px;height:clamp(58px,11vh,92px);
+  .book__ribbon{position:absolute;top:-3px;left:calc(var(--pw) - 6px);width:12px;height:clamp(42px,8vh,68px);
     z-index:120;transform:translateZ(8px);background:linear-gradient(180deg,#ff3a24,#c41d0b);
     clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%);
     box-shadow:0 5px 12px rgba(0,0,0,.5), inset 1.5px 0 0 rgba(255,255,255,.28)}
@@ -899,23 +905,21 @@
     backface-visibility:hidden;-webkit-backface-visibility:hidden;
     background:linear-gradient(90deg,rgba(8,6,3,.5),rgba(8,6,3,0) 32%,rgba(8,6,3,0) 68%,rgba(8,6,3,.5))}
   /* page content */
-  .pg{position:absolute;inset:0;padding:clamp(20px,2.4vw,38px);display:flex;flex-direction:column}
-  .pg--paper{background:#0a0b0d center/cover no-repeat;color:var(--ink)}
-  /* Every FACE now carries its OWN image, so each is centred. These used to be
-     left/right slices of ONE image shared across the spread, but the page aspect equals
-     the image aspect, so `cover` left nothing to offset and BOTH faces rendered the
-     identical picture (Ryan: "having each entire face the same picture is boring"). */
-  .pg--l,.pg--r{background-position:center center}
+  .pg{position:absolute;inset:0;padding:clamp(18px,2vw,30px);display:flex;flex-direction:column}
+  .pg--paper{background:#0a0b0d center/200% 100% no-repeat;color:var(--ink)}
+  /* Two halves of one panoramic artwork meet at the binding. */
+  .pg--l{background-position:left center}
+  .pg--r{background-position:right center}
   .pg--paper::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
     background:linear-gradient(180deg,rgba(8,8,10,.12),rgba(8,8,10,.18) 42%,rgba(8,8,10,.82))}
   .pg--paper > *{position:relative;z-index:1}
   /* left page: chapter marker anchored at the foot */
   .pg--text{justify-content:flex-end}
   .pg--text .lbl{font-family:var(--mono);font-size:clamp(10px,1.1vw,12px);letter-spacing:.2em;text-transform:uppercase;color:var(--signal);margin-bottom:9px}
-  .pg--text h3{font-family:var(--disp);font-weight:700;font-size:clamp(26px,3.5vw,44px);line-height:.98;letter-spacing:-.02em;color:var(--foil);text-shadow:0 2px 12px rgba(0,0,0,.7)}
+  .pg--text h3{font-family:var(--disp);font-weight:700;font-size:clamp(26px,3vw,40px);line-height:.98;letter-spacing:-.02em;color:var(--foil);text-shadow:0 2px 12px rgba(0,0,0,.7)}
   /* right page: one punch line at the foot */
   .pg--right{justify-content:flex-end}
-  .pg--right .punch{font-family:var(--disp);font-weight:700;font-size:clamp(23px,3.1vw,42px);line-height:1.03;letter-spacing:-.025em;color:var(--foil);text-shadow:0 2px 14px rgba(0,0,0,.72);max-width:15ch}
+  .pg--right .punch{font-family:var(--disp);font-weight:700;font-size:clamp(23px,2.6vw,36px);line-height:1.03;letter-spacing:-.025em;color:var(--foil);text-shadow:0 2px 14px rgba(0,0,0,.72);max-width:20ch}
   .pg--right .punch .sig{color:var(--signal)}
   .pg--right .sub{margin-top:13px;font-family:var(--mono);font-size:clamp(10.5px,1.1vw,12.5px);letter-spacing:.03em;color:rgba(236,231,219,.72);line-height:1.6;max-width:30ch;text-shadow:0 1px 8px rgba(0,0,0,.8)}
   /* hardcover pages (front + back): image + title at the foot */
@@ -925,7 +929,7 @@
     background:linear-gradient(180deg,rgba(8,8,10,.34),rgba(8,8,10,.08) 38%,rgba(8,8,10,.86))}
   .pg--cover > *,.pg--back > *{position:relative;z-index:1}
   .pg--cover .k,.pg--back .k{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--signal);margin-bottom:12px}
-  .pg--cover h3,.pg--back .big{font-family:var(--disp);font-weight:700;font-size:clamp(30px,4.1vw,52px);line-height:.98;letter-spacing:-.025em;color:var(--foil);text-shadow:0 2px 16px rgba(0,0,0,.78)}
+  .pg--cover h3,.pg--back .big{font-family:var(--disp);font-weight:700;font-size:clamp(30px,3.4vw,46px);line-height:.98;letter-spacing:-.025em;color:var(--foil);text-shadow:0 2px 16px rgba(0,0,0,.78)}
   .pg--cover .sub{margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:rgba(236,231,219,.62);line-height:1.6;max-width:26ch;text-shadow:0 1px 8px rgba(0,0,0,.8)}
   .pg--back .big .sig{color:var(--signal)}
   .pg--back .live{margin-top:16px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(236,231,219,.62);display:inline-flex;align-items:center;gap:8px}
@@ -2211,12 +2215,12 @@
       <div class="zp__stage">
         <div class="zp__layer zp--0">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-about.jpg" alt="A lone figure standing in a vast dark server hall lit by red indicators" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-harness.webp" alt="An ivory sphere suspended inside nested titanium frames" loading="lazy" fetchpriority="low">
           </figure>
         </div>
         <div class="zp__layer zp--1">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-name.jpg" alt="Ho Chi Minh City at night from above" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-city.webp" alt="A floating city sculpture crossed by a red ribbon river" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// who</span>
               <b class="zp__v">Ryan</b>
@@ -2226,7 +2230,7 @@
         </div>
         <div class="zp__layer zp--2">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-lang.jpg" alt="A vast dark library lit by a single red reading lamp" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-languages.webp" alt="Four glass apertures connected by a red light thread" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// languages</span>
               <b class="zp__v">Four.</b>
@@ -2241,7 +2245,7 @@
         </div>
         <div class="zp__layer zp--3">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-edu.jpg" alt="A dark university lecture hall at night" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-study.webp" alt="An impossible ivory staircase winding around a floating black sphere" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// study</span>
               <b class="zp__v">8.3 / 10</b>
@@ -2251,7 +2255,7 @@
         </div>
         <div class="zp__layer zp--4">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-stack.jpg" alt="Macro of a matte black circuit board lit by a single red LED" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-stack.webp" alt="Floating titanium plates connected by a red cable" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// stack</span>
               <b class="zp__v">Python. C++. TypeScript.</b>
@@ -2261,7 +2265,7 @@
         </div>
         <div class="zp__layer zp--5">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-pivot.jpg" alt="Red light trails sweeping through a hard bend in a dark tunnel" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-pivot.webp" alt="A folded titanium ribbon turning through space with a red centerline" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// the pivot</span>
               <b class="zp__v">Games to agents.</b>
@@ -2271,7 +2275,7 @@
         </div>
         <div class="zp__layer zp--6">
           <figure class="zp__card">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/about-award.jpg" alt="A single red spotlight on a dark auditorium stage" loading="lazy" fetchpriority="low">
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-ld="assets/cinematic/about-award.webp" alt="Four basalt columns supporting a levitating ivory ring" loading="lazy" fetchpriority="low">
             <figcaption class="zp__cap">
               <span class="zp__k">// award</span>
               <b class="zp__v">2nd prize</b>
@@ -2393,45 +2397,45 @@
 
             <!-- leaf 0 : front cover / 01 marker -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--cover" data-ld-bg="assets/book-cover.jpg">
+              <div class="face face--f"><div class="pg pg--cover" data-ld-bg="assets/cinematic/book-cover.webp">
                 <div class="k">How I work</div>
                 <h3>I operate AI.</h3>
                 <div class="sub">the tools, the models, the calls</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/book-pg-1.jpg">
+              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/cinematic/book-stack.webp">
                 <div class="lbl">01</div><h3>The stack</h3>
               </div></div>
             </div>
 
             <!-- leaf 1 : 01 punch (stack) / 02 marker -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/book-pg-1r.jpg">
+              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/cinematic/book-stack.webp">
                 <div class="punch">Python. C++.<br>TypeScript.</div>
                 <div class="sub">and the model behind every call. the tools are just tools.</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/book-pg-2.jpg">
+              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/cinematic/book-orchestrate.webp">
                 <div class="lbl">02</div><h3>The edge</h3>
               </div></div>
             </div>
 
             <!-- leaf 2 : 02 punch (the edge) / 03 marker -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/book-pg-2r.jpg">
+              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/cinematic/book-orchestrate.webp">
                 <div class="punch">I don't just prompt.<br><span class="sig">I operate.</span></div>
                 <div class="sub">the right ask, the right tool, the right model, the right context budget.</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/book-pg-3.jpg">
+              <div class="face face--b"><div class="pg pg--paper pg--text pg--l" data-ld-bg="assets/cinematic/book-proof.webp">
                 <div class="lbl">03</div><h3>The receipt</h3>
               </div></div>
             </div>
 
             <!-- leaf 3 : 03 punch (the receipt) / back cover -->
             <div class="leaf"><span class="sh" aria-hidden="true"></span>
-              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/book-pg-3r.jpg">
+              <div class="face face--f"><div class="pg pg--paper pg--right pg--r" data-ld-bg="assets/cinematic/book-proof.webp">
                 <div class="punch">This site is<br>the proof.</div>
                 <div class="sub">designed and shipped by operating AI. days, not weeks.</div>
               </div></div>
-              <div class="face face--b"><div class="pg pg--back" data-ld-bg="assets/book-back.jpg">
+              <div class="face face--b"><div class="pg pg--back" data-ld-bg="assets/cinematic/book-cover.webp">
                 <div class="k">How I work</div>
                 <div class="big">Less demo.<br><span class="sig">More proof.</span></div>
                 <div class="live"><b></b>Open to work</div>
@@ -5735,7 +5739,7 @@
      Gated: without this the CSS fallback (.zoomp:not(.is-zp)) shows a plain card grid. */
   if(hasST){ (function(){
     var sec=document.getElementById('about-cards'); if(!sec) return;
-    if(!matchMedia('(min-width:760px)').matches) return;    // phones read the grid instead
+    gsap.matchMedia().add('(min-width:761px)', function(){
     var layers=[].slice.call(sec.querySelectorAll('.zp__layer'));
     var payoff=sec.querySelector('.zp__payoff');
     if(!layers.length) return;
@@ -5758,6 +5762,13 @@
         if(payoff){ var o=(p-0.62)/0.3; payoff.style.opacity=(o<0?0:(o>1?1:o)).toFixed(3); }
       }
     });
+    return function(){
+      sec.classList.remove('is-zp');
+      layers.forEach(function(layer){ layer.style.transform=''; });
+      if(payoff) payoff.style.opacity='';
+      amb(false);
+    };
+    });
   })(); }
 
   /* ---- HOW I WORK: a 3D page-flip book that turns on scroll ----
@@ -5767,11 +5778,12 @@
   if(hasST){ (function(){
     var sec=document.getElementById('capabilities'), book=document.getElementById('book');
     if(!sec||!book) return;
-    if(!matchMedia('(min-width:760px)').matches) return;   // keep the stacked fallback on phones
+    gsap.matchMedia().add('(min-width:761px)', function(){
     var leaves=book.querySelectorAll('.leaf'), N=leaves.length; if(!N) return;
     var shades=[]; for(var s=0;s<N;s++){ shades[s]=leaves[s].querySelector('.sh'); }
     var baseL=book.querySelector('.book__base--l'), baseR=book.querySelector('.book__base--r'), ribbon=book.querySelector('.book__ribbon');
     book.classList.add('is-3d');
+    sec.classList.add('is-book');
     var pw=book.offsetWidth/2;                            // half-page width (book is 2 pages wide)
     function cl(v){ return v<0?0:v>1?1:v; }
     function ramp(t,a,b){ return cl((t-a)/(b-a)); }       // remap t from [a,b] to [0,1]
@@ -5808,6 +5820,16 @@
         if(fi!==lastFlip){ lastFlip=fi; try{ sfx('flip'); }catch(_){} }   // a page just turned
       },
       onRefresh:function(self){ pw=book.offsetWidth/2; layout(self?self.progress:0); } });
+    return function(){
+      book.classList.remove('is-3d');
+      sec.classList.remove('is-book');
+      book.style.transform='';
+      for(var i=0;i<N;i++){
+        leaves[i].style.transform=''; leaves[i].style.zIndex='';
+        if(shades[i]) shades[i].style.opacity='';
+      }
+    };
+    });
   })(); }
 
   /* ---- timeline: the fill LEADING EDGE tracks a line near the viewport centre,
