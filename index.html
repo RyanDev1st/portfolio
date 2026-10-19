@@ -1550,6 +1550,37 @@
     .tl__fill{transform:scaleY(1);animation:none}
     .tl__item.is-live .tl__node::before{animation:none}
   }
+
+  /* ---- PHONE PASS ----
+     Kept together at the end so it wins over the desktop rules above without touching them. */
+  @media (max-width:900px){
+    /* the nav used to vanish below 900px, leaving no way to jump between sections */
+    .bar nav{display:flex;gap:0;margin:0 0 0 auto}
+    .bar nav a{padding:7px 9px;font-size:10.5px;letter-spacing:.08em}
+    .nav__ind{height:28px}
+    /* the notice drops in under the nav: the bottom edge belongs to the name and the dock */
+    .mnote{top:calc(70px + env(safe-area-inset-top,0px));bottom:auto;transform:translateY(-12px)}
+    .mnote.is-in{transform:none}
+  }
+  @media (max-width:760px){
+    /* the rail sits at left:15px; the aside was indented past it but the body text was not,
+       so the red line ran straight through every paragraph */
+    .tl__main{padding-left:40px}
+    .tl__body{font-size:14.5px}
+  }
+  @media (max-width:520px){
+    .bar,.bar.is-stuck{padding:10px}
+    .bar__inner,.bar.is-stuck .bar__inner{padding:8px 8px 8px 14px;gap:6px}
+    .bar nav a{padding:7px 7px;font-size:10px;letter-spacing:.05em}
+    .bar .live{font-size:0;letter-spacing:0;padding:0 6px}   /* status keeps its red dot, drops the words */
+    .bar .live .dot{margin-right:0}
+    /* the fixed music/chat dock owns the bottom-right corner: keep resting content out of it */
+    .hero__lockup{right:70px;max-width:none}
+    .hero__portrait{width:clamp(250px,80vw,360px);transform:translate(-50%,-60%)}
+    .react,.react.is-aside{left:10px;right:10px;width:auto}
+    .react__chip{white-space:normal;line-height:1.25;padding:9px 4px;font-size:10.5px}
+    .contact{padding-bottom:84px}
+  }
 </style>
 </head>
 <body class="hook-active">
@@ -2415,6 +2446,7 @@
               <a href="mailto:ryandev1st@gmail.com">Email</a>
               <a href="https://github.com/RyanDev1st" target="_blank" rel="noopener">GitHub</a>
               <a href="https://www.linkedin.com/in/ryandev1st/" target="_blank" rel="noopener">LinkedIn</a>
+              <a href="https://ryandev1st.github.io/tree/">All links</a>
             </div>
           </div>
           <div class="foot__sep" aria-hidden="true"></div>
@@ -3587,35 +3619,30 @@
     var off=isImp?roff:moff, delays=isImp?delayIn:delayOut, ff=isImp?FLIP_FRAC:FLIP_FRAC_OUT;   // B&W layer = the photo-sampled ascii on transparent bg (roff), matching the hover disc pixel-for-pixel
     for(var ty=0;ty<TROWS;ty++){ for(var tx=0;tx<TCOLS;tx++){
       var sx=tx*tw, sy=ty*th, l=tileT(gp, delays[ty*TCOLS+tx], ff);
-      if(which==='implode' && l>0){                                   // hi-fi leaving here -> mosaic takes the cell
-        var lr=Math.min(1, l*1.35);                                   // slight lead so the cell is never empty mid-flip
-        if(lr>=1){ fxCtx.drawImage(moff, sx,sy,tw,th, sx,sy,tw,th); } // settled: plain blit, skip the matrix ops
-        else { var mp=easeRise(lr);
-          // CROSSFADE (Ryan): the mosaic FADES UP as it rises instead of snapping in at
-          // full opacity. Mid-flip the cell used to carry the folding ascii AND a solid
-          // mosaic square stacked at 100% - two different media (116-col glyphs vs 72-col
-          // solid cells) visible in the same cell at once, which is exactly what read as
-          // the "fused" frame. Dissolving them past each other keeps ONE dominant medium
-          // at any instant. easeRise overshoots (back.out) so clamp before using as alpha.
-          fxCtx.save(); fxCtx.globalAlpha=Math.max(0,Math.min(1,mp));
-          fxCtx.translate(sx+tw/2, sy+th/2); fxCtx.scale(1, mp);
-          fxCtx.drawImage(moff, sx,sy,tw,th, -tw/2,-th/2, tw,th); fxCtx.restore(); }
+      if(isImp){
+        // SPLIT-FLAP: a cell holds exactly ONE medium at any instant. The first half of the
+        // tile's flip folds the B&W glyph tile shut; the second half unfolds the colour
+        // mosaic tile. The old crossfade drew the rising mosaic AND the fading glyphs in the
+        // same cell for a third of the phase, so whole rows read as glyphs fused over colour,
+        // and any dropped frame held that mixed state on screen (the reported anomaly).
+        if(l<=0){ fxCtx.drawImage(roff, sx,sy,tw,th, sx,sy,tw,th); continue; }
+        if(l>=1){ fxCtx.drawImage(moff, sx,sy,tw,th, sx,sy,tw,th); continue; }
+        var src, sc;
+        if(l<0.5){ src=roff; var h=l*2;  sc = rev ? easeRiseRev(1-h) : (1-easeFold(h)); }   // glyphs folding away (reverse: arriving)
+        else     { src=moff; var u=(l-0.5)*2; sc = rev ? (1-easeFold(1-u)) : easeRise(u); } // mosaic unfolding in (reverse: folding away)
+        if(sc<=0.001) continue;
+        fxCtx.save(); fxCtx.translate(sx+tw/2, sy+th/2); fxCtx.scale(1, sc);
+        fxCtx.drawImage(src, sx,sy,tw,th, -tw/2,-th/2, tw,th); fxCtx.restore();
+        continue;
       }
       if(l>=1) continue;                                              // tile fully folded -> layer beneath stands
       if(l<=0){ fxCtx.drawImage(off, sx,sy,tw,th, sx,sy,tw,th); continue; }   // untouched: plain blit
-      // back.in dips below 0 first => scale >1 => the tile PUFFS before it folds (anticipation).
-      // The outgoing fade is IMPLODE-ONLY: there it is the other half of the crossfade with
-      // the mosaic rising in the SAME cell. In the EXPLODE there is no second layer in the
-      // cell (the photo is a real element BENEATH), so fading the tile makes it go
-      // translucent and vanish before the fold reads - the phase then feels instant and
-      // you only catch the end frames (Ryan). Solid tiles keep the fold tactile.
-      // REVERSE gets its own ease. Running back.in backwards leaves only a ~1% bulge, so the
-      // returning mosaic arrived flat with no "pop" (Ryan). In reverse this tile is ARRIVING,
-      // so drive its arrival progress (1-l) with back.out: overshoot, then settle. Same
-      // GSAP ease family as the forward rise, just aimed at the correct direction of travel.
-      var sc = rev ? easeRiseRev(1-l) : (1-easeFold(l));
+      // EXPLODE: back.in dips below 0 first => scale >1 => the tile PUFFS before it folds
+      // (anticipation). No fade: the photo is a real element BENEATH, so a translucent tile
+      // would vanish before the fold reads (Ryan). Solid tiles keep the fold tactile.
+      // REVERSE: this tile is ARRIVING, so drive its arrival (1-l) with back.out instead.
+      sc = rev ? easeRiseRev(1-l) : (1-easeFold(l));
       fxCtx.save();
-      if(which==='implode') fxCtx.globalAlpha=Math.max(0,Math.min(1,1-l*l));
       fxCtx.translate(sx+tw/2, sy+th/2); fxCtx.scale(1, sc);
       fxCtx.drawImage(off, sx,sy,tw,th, -tw/2,-th/2, tw,th); fxCtx.restore();
     }}
@@ -3634,9 +3661,20 @@
   // The `.ptag` "Ryan" label toggles the portrait between photo and ascii by playing the
   // reveal FORWARD or in full REVERSE. portraitMode = the settled state; portraitBusy gates
   // re-entry while ANY flip (the initial reveal OR a toggle) is mid-flight.
-  var portraitMode='photo', portraitBusy=false, revealTL=null, revealWatch=0;
+  var portraitMode='photo', portraitBusy=false, revealTL=null, revealWatch=0, runSeq=0;
+  // ONE flip owns the canvas at a time. The replay menu can start a reveal while another
+  // (or a reverse) is mid-flight; both used to draw into the same canvas and share one
+  // watchdog, so the first to finish cleared the other's rescue timer. beginRun() retires
+  // the previous run outright and hands back a token every callback checks before acting.
+  function beginRun(){
+    runSeq++;
+    if(revealTL){ try{ revealTL.kill(); }catch(_){} revealTL=null; }
+    if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; }
+    try{ if(window.gsap && faceFx){ gsap.killTweensOf(faceFx); gsap.set(faceFx,{clearProps:'transform'}); } }catch(_){}
+    return runSeq;
+  }
 
-  function gsapReveal(done){
+  function gsapReveal(done, my){
     var g=window.gsap; buildFx(); drawRest();
     // Disable lag-smoothing for the reveal. Default GSAP caps a >500ms frame's delta to
     // ~33ms, so on a networked LIVE load a burst of long frames (the 2.2MB portrait decode
@@ -3660,34 +3698,34 @@
     tl.add(function(){ try{ playSound('reform'); }catch(_){} }, LEAD_HOLD+D_IMPLODE+PIVOT_HOLD);
     // PHASE 2 — explode: mosaic flips away centre->edge, uncovering the photo.
     tl.to(b,{p:1,duration:D_EXPLODE,ease:E_EXPLODE,onUpdate:function(){ drawFx('explode',b.p); }}, LEAD_HOLD+D_IMPLODE+PIVOT_HOLD);
-    tl.add(function(){ finishFx(); if(done) done(); }, LEAD_HOLD+D_IMPLODE+PIVOT_HOLD+D_EXPLODE);   // canvas stays for the hover spotlight
+    tl.add(function(){ if(my!==runSeq) return; finishFx(); if(done) done(); }, LEAD_HOLD+D_IMPLODE+PIVOT_HOLD+D_EXPLODE);   // canvas stays for the hover spotlight
   }
   function startPortraitReveal(done){
     if(!faceFrame){ if(done) done(); return; }
     portraitBusy=true;
     disableSpot();                                 // the reveal owns the canvas; no stray spotlight frames
+    var my=beginRun();
     // DECODE the photo up-front so the is-photo-live pivot doesn't trigger the big first
     // decode of the 2.2MB portrait DURING the explode (local = cached/instant, live = the
     // decode stalls the second layer). Non-blocking; the lead hold covers the latency.
     try{ if(facePhoto && facePhoto.decode) facePhoto.decode().catch(function(){}); }catch(_){}
     // one-shot completion guard: whichever fires first (natural end OR watchdog) wins.
     var finished=false;
-    function fin(){ if(finished) return; finished=true; if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; } if(done) done(); }
+    function fin(){ if(finished || my!==runSeq) return; finished=true; if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; } revealTL=null; if(done) done(); }
     if(reduce || !fxCtx || !MOSA || !HIFI){       // reduced motion / no canvas: straight to the photo
       faceFrame.classList.add('is-photo-live'); faceFrame.classList.remove('is-ascii'); hideFx(); portraitMode='photo'; portraitBusy=false; fin(); return;
     }
     // WATCHDOG: force the end state if the timeline ever stalls, so the portrait can NEVER
     // freeze mid-flip (the live-site bug). Cleared by fin() on natural completion.
-    if(revealWatch){ clearTimeout(revealWatch); }
-    revealWatch=setTimeout(function(){ revealWatch=0; if(finished) return;
+    revealWatch=setTimeout(function(){ revealWatch=0; if(finished || my!==runSeq) return;
       if(window.gsap && revealTL){ try{ revealTL.kill(); }catch(_){} }
       faceFrame.classList.add('is-photo-live'); finishFx(); fin();
     }, (LEAD_HOLD+D_IMPLODE+PIVOT_HOLD+D_EXPLODE)*1000 + 1500);
-    if(window.gsap){ gsapReveal(fin); return; }
+    if(window.gsap){ gsapReveal(fin, my); return; }
     // no-GSAP fallback: rAF-drive the same LEAD_HOLD -> two flip phases.
     buildFx(); drawRest();
     var LH=LEAD_HOLD*1000, D1=D_IMPLODE*1000, DH=PIVOT_HOLD*1000, D2=D_EXPLODE*1000, t0=performance.now(), lit=false, cued=false, cued2=false;
-    (function tick(now){ var e=now-t0; if(finished) return;             // watchdog already finished it
+    (function tick(now){ var e=now-t0; if(finished || my!==runSeq) return;   // finished, or a newer run took the canvas
       if(e<=LH){ requestAnimationFrame(tick); }                       // hold: B&W ascii stands (drawRest already up)
       else if(e<=LH+D1){ if(!cued){ try{ playSound('dissolve'); }catch(_){} cued=true; } drawFx('implode', easeMaster((e-LH)/D1)); requestAnimationFrame(tick); }
       else if(e<=LH+D1+DH){                                           // pivot hold: full mosaic stands alone
@@ -3707,6 +3745,7 @@
   function reverseRun(done){
     if(!faceFrame || !fxCtx || !MOSA || !HIFI){ if(faceFrame) faceFrame.classList.remove('is-photo-live'); if(done) done(); return; }
     disableSpot();                                         // the flip owns the canvas (no stray spotlight frames)
+    var my=beginRun();
     buildFx();                                             // ensure the offscreens are sized/baked
     fxCtx.clearRect(0,0,faceFx.width,faceFx.height); faceFx.style.display='block';   // photo shows under the empty canvas during the lead hold
     // One-shot completion guard + a HARD guarantee that landing in ascii NEVER keeps the
@@ -3716,12 +3755,11 @@
     // bug. So fin() drops it unconditionally, and a watchdog forces fin() if the flip
     // stalls (reverseRun had NO watchdog, unlike startPortraitReveal - that was the hole).
     var finished=false;
-    function fin(){ if(finished) return; finished=true; if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; }
+    function fin(){ if(finished || my!==runSeq) return; finished=true; if(revealWatch){ clearTimeout(revealWatch); revealWatch=0; } revealTL=null;
       // never leave the pop's transform on the canvas if this run was cut short
       try{ if(window.gsap && faceFx){ gsap.killTweensOf(faceFx); gsap.set(faceFx,{scale:1,clearProps:'transform'}); } }catch(_){}
       if(faceFrame) faceFrame.classList.remove('is-photo-live'); if(done) done(); }
-    if(revealWatch){ clearTimeout(revealWatch); }
-    revealWatch=setTimeout(function(){ revealWatch=0; if(finished) return;
+    revealWatch=setTimeout(function(){ revealWatch=0; if(finished || my!==runSeq) return;
       if(window.gsap && revealTL){ try{ revealTL.kill(); }catch(_){} }
       drawRest(); fin();
     }, (LEAD_HOLD+D_EXPLODE+PIVOT_HOLD+D_IMPLODE)*1000 + 1500);
@@ -3744,7 +3782,7 @@
     }
     // no-GSAP fallback: rAF-drive the same phases, reversed.
     var LH=LEAD_HOLD*1000, D2=D_EXPLODE*1000, DH=PIVOT_HOLD*1000, D1=D_IMPLODE*1000, t0=performance.now(), c1=false, c2=false, dropped=false;
-    (function tick(now){ var e=now-t0; if(finished) return;           // watchdog already finished it
+    (function tick(now){ var e=now-t0; if(finished || my!==runSeq) return;   // finished, or a newer run took the canvas
       if(e<=LH){ requestAnimationFrame(tick); }                       // hold: photo stands (canvas empty)
       else if(e<=LH+D2){ if(!c1){ try{ playSound('reform'); }catch(_){} c1=true; } drawFx('explode', 1-easeMaster((e-LH)/D2)); requestAnimationFrame(tick); }
       else if(e<=LH+D2+DH){ if(!dropped){ drawFx('explode',0); faceFrame.classList.remove('is-photo-live'); dropped=true; } requestAnimationFrame(tick); }
@@ -4089,8 +4127,16 @@
   else { hideFx(); if(reduce && faceFrame) faceFrame.classList.add('is-photo-live'); }
   var resizeT;
   addEventListener('resize',function(){ clearTimeout(resizeT); resizeT=setTimeout(function(){ measure();
-    // rebuild the FX canvas to the new photo rect; repaint the resting drawing only if the reveal hasn't run.
-    if(faceFrame && !faceFrame.classList.contains('is-photo-live') && fxCtx && MOSA && HIFI){ buildFx(); drawRest(); }
+    // Rebuild the FX canvas to the new photo rect in EVERY state. It used to rebuild only before
+    // the reveal, so after a resize or phone rotation the canvas kept its old size and the hover
+    // disc / ascii base sat misaligned over the photo. Mid-flip, the running tween repaints the
+    // next frame itself; settled, repaint what the mode shows (ascii base, or nothing over the photo).
+    if(faceFrame && fxCtx && MOSA && HIFI && !reduce){
+      var nr=fxRect(), ndpr=Math.min(2, window.devicePixelRatio||1);   // mobile URL-bar show/hide fires resize without moving the portrait: skip the re-bake
+      if(Math.round(nr.w*ndpr)===faceFx.width && Math.round(nr.h*ndpr)===faceFx.height){ faceFx.style.left=nr.left+'px'; spotRect=null; return; }
+      buildFx(); spotRect=null; litRect=null; litTextRect=null;
+      if(!portraitBusy && (portraitMode==='ascii' || !faceFrame.classList.contains('is-photo-live'))) drawRest();
+    }
   },150); });
 
   // ---------------------------------------------------------------------
@@ -4639,6 +4685,7 @@
     var waits=0;
     function show(){
       if(shown) return;
+      if(!roomy() && onContact===false) return;      // phone: only over Contact (see the observer below)
       if(busy() && !roomy() && waits++ < 12){ setTimeout(show, 5000); return; }
       side(busy());
       shown=true;
@@ -4760,8 +4807,21 @@
     // Trigger 1: reached the contact section (they scrolled the whole thing).
     var target=document.getElementById('contact');
     if(target && 'IntersectionObserver' in window){
+      // On a phone the panel spans the screen width, so once shown it sat over the hero and
+      // every section on the way back up. Narrow screens keep it tied to Contact: it steps out
+      // when Contact leaves the screen (not a dismissal) and returns when Contact comes back.
+      var reached=false, onContact=false;
       var io=new IntersectionObserver(function(en){ en.forEach(function(t){
-        if(t.isIntersecting){ io.disconnect(); setTimeout(show, 900); } }); }, { threshold:0.35 });
+        onContact=t.isIntersecting;
+        if(t.isIntersecting){
+          if(!reached){ reached=true; setTimeout(function(){ if(roomy() || onContact) show(); }, 900); }
+          else if(!roomy() && !shown && !picked && !(SS && SS.getItem('ryan_reactseen')==='1')) show();
+        } else if(reached && !roomy() && shown && !picked && !box.hidden){
+          shown=false;
+          if(G && !reduce) G.to(card,{y:10,scale:.97,autoAlpha:0,duration:.26,ease:'power2.in',
+            onComplete:function(){ if(!shown){ box.hidden=true; box.classList.remove('is-show'); } }});
+          else { box.hidden=true; box.classList.remove('is-show'); }
+        } }); }, { threshold:0.2 });
       // only start watching after the site is up, so it never races the hook/hero
       var w=setInterval(function(){ if(document.body.classList.contains('site-ready')){ clearInterval(w); io.observe(target); } }, 400);
     }
